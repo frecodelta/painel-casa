@@ -1,0 +1,1611 @@
+<!DOCTYPE html>
+<html lang="pt-PT">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Casa">
+<meta name="format-detection" content="telephone=no">
+<meta name="theme-color" content="#2b0610">
+<link rel="apple-touch-icon" href="icone.png">
+<link rel="icon" href="icone.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Great+Vibes&family=Playfair+Display:wght@400;700&display=swap">
+<title>Painel da Casa</title>
+<style>
+  :root {
+    --bord: #5c0b1d; --bord-d: #2b0610; --red: #c8102e; --red-l: #e5394f;
+    --gold: #d4af37; --gold-l: #f3d77c; --green: #1e6b45; --green-d: #0f3b27;
+    --cream: #fff6e8; --muted: rgba(255,246,232,.62); --faint: rgba(255,246,232,.38);
+    --line: rgba(212,175,55,.38); --card: rgba(36,6,14,.82);
+    --serif: "Playfair Display", Georgia, "Times New Roman", serif;
+    --script: "Great Vibes", "Snell Roundhand", "Apple Chancery", cursive;
+  }
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  html, body { margin: 0; height: 100%; }
+  body {
+    color: var(--cream); font-family: -apple-system, BlinkMacSystemFont, "Helvetica Neue", Arial, sans-serif;
+    -webkit-text-size-adjust: 100%; overflow: hidden; -webkit-user-select: none; user-select: none;
+    background-color: var(--bord-d);
+    background-image:
+      radial-gradient(rgba(243,215,124,.09) 1px, transparent 1.6px),
+      radial-gradient(ellipse at 50% -10%, #8a1830 0%, #4a0918 42%, #1c030b 100%);
+    background-size: 30px 30px, 100% 100%;
+  }
+  .hidden { display: none !important; }
+  input, select, textarea { -webkit-user-select: text; user-select: text; }
+  ul { list-style: none; margin: 0; padding: 0; }
+
+  /* ---------- decoração ---------- */
+  #snow { position: fixed; left: 0; top: 0; width: 100%; height: 100%; z-index: 1; pointer-events: none; }
+  #garland { position: fixed; left: 0; top: 0; right: 0; height: 30px; z-index: 5; pointer-events: none; }
+  #garland svg { position: absolute; left: 0; top: 0; width: 100%; height: 14px; }
+  #garland path { fill: none; stroke: #0b2a1a; stroke-width: 1.6; }
+  .bulb { position: absolute; top: 6px; width: 10px; height: 15px; margin-left: -5px; border-radius: 50% 50% 46% 46%; -webkit-animation: twinkle 3s ease-in-out infinite; animation: twinkle 3s ease-in-out infinite; }
+  .bulb:before { content: ""; position: absolute; left: 2px; top: -3px; width: 6px; height: 4px; border-radius: 1px; background: #8a7a3a; }
+  .b0 { background: #ff3b4f; box-shadow: 0 2px 10px 2px rgba(255,59,79,.75); }
+  .b1 { background: #39d98a; box-shadow: 0 2px 10px 2px rgba(57,217,138,.7); }
+  .b2 { background: #ffd45a; box-shadow: 0 2px 10px 2px rgba(255,212,90,.8); }
+  .b3 { background: #fff1d0; box-shadow: 0 2px 10px 2px rgba(255,241,208,.75); }
+  @-webkit-keyframes twinkle { 0%, 100% { opacity: 1; } 50% { opacity: .32; } }
+  @keyframes twinkle { 0%, 100% { opacity: 1; } 50% { opacity: .32; } }
+  body.nogarland #garland { display: none; }
+  body.nogarland #app { padding-top: 6px; }
+
+  /* ---------- estrutura ---------- */
+  #app { position: relative; z-index: 2; height: 100%; display: -webkit-flex; display: flex; -webkit-flex-direction: column; flex-direction: column; padding-top: 26px; padding-left: env(safe-area-inset-left); padding-right: env(safe-area-inset-right); -webkit-transition: opacity .6s; transition: opacity .6s; }
+  body.night #app { opacity: .42; }
+
+  #top { -webkit-flex: none; flex: none; display: -webkit-flex; display: flex; -webkit-align-items: center; align-items: center; -webkit-justify-content: space-between; justify-content: space-between; padding: 6px 22px 10px; }
+  #clockbox { -webkit-flex: none; flex: none; min-width: 230px; }
+  #clock { font-family: var(--serif); font-size: 70px; line-height: 1; letter-spacing: 1px; }
+  #date { font-size: 17px; color: var(--muted); margin-top: 6px; }
+  #xmas { -webkit-flex: 1; flex: 1; text-align: center; padding: 0 10px; min-width: 0; }
+  #xmasbig { font-family: var(--script); font-size: 46px; line-height: 1.05; color: var(--gold-l); text-shadow: 0 0 18px rgba(243,215,124,.35); white-space: nowrap; }
+  #xmassub { font-size: 13px; letter-spacing: 3px; text-transform: uppercase; color: var(--muted); margin-top: 2px; }
+  #wx { -webkit-flex: none; flex: none; text-align: right; min-width: 300px; }
+  #wxnow { display: -webkit-flex; display: flex; -webkit-align-items: center; align-items: center; -webkit-justify-content: flex-end; justify-content: flex-end; }
+  #wxicon { font-size: 40px; margin-right: 10px; line-height: 1; }
+  #wxtemp { font-family: var(--serif); font-size: 44px; margin-right: 12px; line-height: 1; }
+  #wxdesc { font-size: 14px; text-align: left; line-height: 1.35; max-width: 170px; }
+  #wxdesc small { color: var(--muted); font-size: 12px; }
+  #wxdays { margin-top: 6px; font-size: 0; white-space: nowrap; }
+  .wd { display: inline-block; width: 58px; text-align: center; font-size: 12px; color: var(--muted); }
+  .wd b { display: block; font-size: 20px; font-weight: 400; margin: 1px 0; }
+  .wd span { color: var(--cream); }
+
+  #views { -webkit-flex: 1; flex: 1; min-height: 0; position: relative; }
+  .view { display: none; height: 100%; padding: 0 10px 10px; }
+  .view.on { display: -webkit-flex; display: flex; }
+
+  #tabs { -webkit-flex: none; flex: none; display: -webkit-flex; display: flex; background: linear-gradient(180deg, #123f29, #0a2617); border-top: 1px solid var(--line); padding: 6px 8px; padding-bottom: calc(6px + env(safe-area-inset-bottom)); }
+  #tabs button { -webkit-flex: 1; flex: 1; margin: 0 4px; background: transparent; border: 0; color: var(--muted); font-size: 15px; padding: 6px 4px; min-height: 54px; border-radius: 14px; }
+  #tabs button i { display: block; font-style: normal; font-size: 22px; line-height: 1.1; margin-bottom: 2px; }
+  #tabs button.on { color: var(--gold-l); background: rgba(200,16,46,.35); box-shadow: inset 0 0 0 1px rgba(243,215,124,.45); }
+  #tabs .cfg { -webkit-flex: none; flex: none; width: 70px; }
+
+  /* ---------- cartões ---------- */
+  .card { -webkit-flex: 1; flex: 1; min-width: 0; min-height: 0; margin: 0 6px; background: var(--card); border: 1px solid var(--line); border-radius: 20px; padding: 14px 16px; display: -webkit-flex; display: flex; -webkit-flex-direction: column; flex-direction: column; box-shadow: 0 10px 30px rgba(0,0,0,.35), inset 0 1px 0 rgba(255,255,255,.04); position: relative; }
+  .card.wide { -webkit-flex: 1.65; flex: 1.65; }
+  .chead { -webkit-flex: none; flex: none; display: -webkit-flex; display: flex; -webkit-align-items: center; align-items: center; -webkit-justify-content: space-between; justify-content: space-between; margin-bottom: 10px; min-height: 40px; }
+  .chead h2 { margin: 0; font-family: var(--serif); font-weight: 700; font-size: 22px; color: var(--gold-l); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .chead h2:before { content: "✦"; color: var(--red-l); font-size: 14px; margin-right: 8px; vertical-align: 3px; }
+  .chead .tools { white-space: nowrap; }
+  .cbody { -webkit-flex: 1; flex: 1; min-height: 0; overflow-y: auto; -webkit-overflow-scrolling: touch; }
+  .cfoot { -webkit-flex: none; flex: none; border-top: 1px solid rgba(243,215,124,.2); margin-top: 6px; padding-top: 10px; cursor: pointer; }
+  .cfoot .money.s { line-height: 1.3; }
+  .cfoot .bar { margin-bottom: 0; }
+  #wxtemp .deg { font-family: -apple-system, BlinkMacSystemFont, "Helvetica Neue", Arial, sans-serif; font-size: .55em; vertical-align: .6em; margin-left: 1px; }
+  h3 { margin: 14px 0 6px; font-size: 12px; text-transform: uppercase; letter-spacing: 1.5px; color: var(--gold); font-weight: 600; }
+  h3:first-child { margin-top: 0; }
+  .muted { color: var(--muted); }
+  .hint { color: var(--muted); font-size: 14px; line-height: 1.45; margin: 6px 0 10px; }
+  .empty { color: var(--faint); font-size: 15px; padding: 10px 4px; }
+
+  button { font: inherit; font-size: 16px; color: var(--cream); background: rgba(255,246,232,.08); border: 1px solid rgba(255,246,232,.12); border-radius: 12px; padding: 9px 14px; min-height: 44px; cursor: pointer; -webkit-appearance: none; }
+  button:active { opacity: .7; }
+  button.red { background: linear-gradient(180deg, #d9263e, #a30d24); border-color: rgba(243,215,124,.55); font-weight: 600; }
+  button.green { background: linear-gradient(180deg, #24804f, #155a36); border-color: rgba(243,215,124,.4); font-weight: 600; }
+  button.gold { background: linear-gradient(180deg, #f3d77c, #c9a12e); color: #3a0a12; border-color: #f7e3a3; font-weight: 700; }
+  button.ghost { background: transparent; border-color: var(--line); color: var(--gold-l); }
+  button.small { min-height: 36px; padding: 5px 11px; font-size: 14px; }
+  button.icon { min-width: 44px; padding: 6px 10px; }
+  button[disabled] { opacity: .45; }
+  input, select { font: inherit; font-size: 17px; color: var(--cream); background: rgba(0,0,0,.28); border: 1px solid rgba(243,215,124,.28); border-radius: 12px; padding: 9px 12px; min-height: 44px; width: 100%; -webkit-appearance: none; appearance: none; }
+  input::-webkit-input-placeholder { color: var(--faint); }
+  input::placeholder { color: var(--faint); }
+  select option { color: #111; }
+  .row { display: -webkit-flex; display: flex; -webkit-align-items: center; align-items: center; margin-top: 8px; }
+  .row > * { margin-right: 8px; }
+  .row > *:last-child { margin-right: 0; }
+  .row > input, .row > select { -webkit-flex: 1; flex: 1; min-width: 0; }
+  .row > button { -webkit-flex: none; flex: none; }
+
+  /* ---------- listas ---------- */
+  .item { display: -webkit-flex; display: flex; -webkit-align-items: center; align-items: center; padding: 9px 4px; border-bottom: 1px solid rgba(243,215,124,.12); cursor: pointer; min-height: 48px; }
+  .item .txt { -webkit-flex: 1; flex: 1; min-width: 0; font-size: 17px; line-height: 1.3; }
+  .item .txt small { display: block; font-size: 13px; color: var(--muted); }
+  .item .when { font-size: 13px; color: var(--gold-l); margin-right: 10px; white-space: nowrap; }
+  .item .amt { font-size: 16px; margin: 0 8px; white-space: nowrap; }
+  .item .del { background: transparent; border: 0; color: var(--faint); font-size: 22px; padding: 4px 10px; min-height: 40px; }
+  .chk { -webkit-flex: none; flex: none; width: 24px; height: 24px; border: 2px solid rgba(243,215,124,.5); border-radius: 50%; margin-right: 12px; }
+  .item.done .chk { background: var(--green); border-color: #39d98a; }
+  .item.done .txt { text-decoration: line-through; color: var(--faint); }
+  .more { font-size: 14px; color: var(--gold-l); padding: 8px 4px; cursor: pointer; }
+
+  /* ---------- luzes ---------- */
+  #lquick { -webkit-flex: none; flex: none; margin-bottom: 8px; white-space: nowrap; overflow-x: auto; -webkit-overflow-scrolling: touch; }
+  #lquick button { margin-right: 6px; }
+  #lscenes { -webkit-flex: none; flex: none; white-space: nowrap; overflow-x: auto; -webkit-overflow-scrolling: touch; margin-bottom: 8px; }
+  .scene { display: inline-block; margin-right: 6px; border-radius: 22px; background: rgba(30,107,69,.35); border-color: rgba(57,217,138,.45); font-size: 15px; min-height: 38px; padding: 6px 14px; }
+  #lgrid { font-size: 0; margin: 0 -5px; }
+  .tile { display: inline-block; vertical-align: top; width: 33.333%; padding: 5px; font-size: 16px; }
+  .tin { position: relative; height: 118px; border-radius: 16px; padding: 12px; background: rgba(255,246,232,.05); border: 1px solid rgba(255,246,232,.1); cursor: pointer; overflow: hidden; -webkit-transition: background .25s, border-color .25s; transition: background .25s, border-color .25s; }
+  .tile.on .tin { background: linear-gradient(150deg, rgba(243,215,124,.30), rgba(200,16,46,.26)); border-color: rgba(243,215,124,.75); box-shadow: 0 0 22px rgba(243,215,124,.18); }
+  .tile.offline .tin { opacity: .45; }
+  .tile.pending .tin { opacity: .7; }
+  .tile.hid .tin { opacity: .35; border-style: dashed; }
+  .ticon { font-size: 26px; line-height: 1; }
+  .tile.on .ticon { text-shadow: 0 0 14px rgba(255,212,90,.95); }
+  .tname { font-size: 16px; font-weight: 600; margin-top: 8px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .tstate { font-size: 13px; color: var(--muted); margin-top: 2px; }
+  .tile.on .tstate { color: var(--gold-l); }
+  .tbr { position: absolute; left: 12px; right: 12px; bottom: 10px; width: auto; min-height: 0; height: 22px; padding: 0; border: 0; background: transparent; }
+  .tbr::-webkit-slider-runnable-track { height: 6px; border-radius: 3px; background: rgba(255,246,232,.25); }
+  .tbr::-webkit-slider-thumb { -webkit-appearance: none; width: 22px; height: 22px; margin-top: -8px; border-radius: 50%; background: var(--cream); border: 3px solid var(--red); }
+  .thide { position: absolute; right: 8px; top: 8px; min-height: 30px; padding: 2px 9px; font-size: 13px; }
+  #lstatus { font-size: 12px; color: var(--faint); margin-right: 8px; }
+  .setup { text-align: center; padding: 18px 10px; }
+  .setup .big { font-size: 46px; }
+  .setup p { color: var(--muted); font-size: 15px; line-height: 1.5; max-width: 460px; margin: 10px auto 14px; }
+  .errbox { background: rgba(200,16,46,.18); border: 1px solid rgba(229,57,79,.5); border-radius: 12px; padding: 10px 12px; font-size: 14px; line-height: 1.4; margin-bottom: 8px; }
+
+  /* ---------- orçamento ---------- */
+  .bigline { display: -webkit-flex; display: flex; -webkit-justify-content: space-between; justify-content: space-between; }
+  .bigline > div:last-child { text-align: right; }
+  .lbl { font-size: 11px; text-transform: uppercase; letter-spacing: 1.5px; color: var(--muted); }
+  .money { font-family: var(--serif); font-size: 36px; line-height: 1.15; }
+  .money.s { font-size: 22px; line-height: 1.9; }
+  .money.neg { color: #ff8a98; }
+  .bar { height: 10px; background: rgba(0,0,0,.35); border-radius: 6px; margin: 10px 0 4px; overflow: hidden; }
+  .bar div { height: 100%; width: 0; background: linear-gradient(90deg, #24804f, #39d98a); border-radius: 6px; }
+  .bar div.mid { background: linear-gradient(90deg, #c9a12e, #f3d77c); }
+  .bar div.over { background: linear-gradient(90deg, #a30d24, #e5394f); }
+  .chip { display: inline-block; font-size: 13px; background: rgba(0,0,0,.3); border: 1px solid rgba(243,215,124,.18); border-radius: 10px; padding: 5px 9px; margin: 0 6px 6px 0; }
+
+  /* ---------- calendário ---------- */
+  #monthname { font-family: var(--serif); font-size: 19px; color: var(--cream); margin-bottom: 6px; }
+  #grid { font-size: 0; }
+  .dow, .day { display: inline-block; width: 14.2857%; text-align: center; font-size: 16px; padding: 9px 0; position: relative; border-radius: 10px; }
+  .dow { color: var(--gold); font-size: 12px; padding: 4px 0; }
+  .day { cursor: pointer; }
+  .day.today { background: linear-gradient(180deg, #d9263e, #a30d24); color: #fff; font-weight: 700; box-shadow: inset 0 0 0 1px rgba(243,215,124,.7); }
+  .day.xmas { color: var(--gold-l); font-weight: 700; }
+  .day.has:after { content: ""; position: absolute; left: 50%; bottom: 3px; width: 5px; height: 5px; margin-left: -2.5px; border-radius: 50%; background: var(--gold-l); }
+  #gcal { height: 100%; min-height: 320px; }
+  #gcal iframe { width: 100%; height: 100%; border: 0; border-radius: 12px; background: #fff; }
+
+  /* ---------- TV ---------- */
+  #v-tv .card { -webkit-align-items: stretch; align-items: stretch; }
+  #tvwrap { display: -webkit-flex; display: flex; -webkit-align-items: center; align-items: center; -webkit-justify-content: space-around; justify-content: space-around; -webkit-flex: 1; flex: 1; min-height: 0; }
+  #tvwrap.off { opacity: .4; }
+  .col { display: -webkit-flex; display: flex; -webkit-flex-direction: column; flex-direction: column; -webkit-align-items: center; align-items: center; }
+  .dpad { position: relative; width: 250px; height: 250px; border-radius: 50%; background: radial-gradient(circle, rgba(92,11,29,.9) 0%, rgba(43,6,16,.95) 70%); border: 2px solid var(--line); box-shadow: 0 10px 30px rgba(0,0,0,.45); }
+  .dpad button { position: absolute; width: 74px; height: 74px; border-radius: 50%; background: transparent; border: 0; font-size: 26px; color: var(--gold-l); }
+  .dpad .up { left: 88px; top: 4px; } .dpad .down { left: 88px; bottom: 4px; }
+  .dpad .left { left: 4px; top: 88px; } .dpad .right { right: 4px; top: 88px; }
+  .dpad .ok { left: 70px; top: 70px; width: 110px; height: 110px; background: linear-gradient(180deg, #d9263e, #a30d24); border: 2px solid var(--gold-l); color: var(--cream); font-size: 20px; font-weight: 700; }
+  .rocker { width: 76px; border-radius: 38px; background: rgba(0,0,0,.3); border: 1px solid var(--line); overflow: hidden; }
+  .rocker button { display: block; width: 100%; height: 70px; border: 0; border-radius: 0; background: transparent; font-size: 28px; color: var(--cream); }
+  .rocker span { display: block; text-align: center; font-size: 12px; letter-spacing: 1.5px; color: var(--gold); padding: 2px 0; }
+  .round { width: 64px; height: 64px; border-radius: 50%; font-size: 22px; margin: 6px; padding: 0; }
+  .tvrow { margin-top: 12px; text-align: center; }
+  .tvrow button { margin: 4px; }
+  .numpad { width: 210px; font-size: 0; text-align: center; }
+  .numpad button { width: 62px; height: 52px; margin: 4px; font-size: 20px; padding: 0; }
+  .apps { -webkit-flex: none; flex: none; text-align: center; padding-top: 8px; }
+  .apps button { margin: 4px; min-width: 120px; }
+  #tvstatus { font-size: 14px; color: var(--muted); }
+  .pressed { -webkit-transform: scale(.94); transform: scale(.94); }
+
+  /* ---------- definições ---------- */
+  #modal { position: fixed; left: 0; top: 0; right: 0; bottom: 0; z-index: 20; background: rgba(10,1,4,.78); display: -webkit-flex; display: flex; -webkit-align-items: center; align-items: center; -webkit-justify-content: center; justify-content: center; padding: 16px; }
+  .sheet { width: 100%; max-width: 640px; max-height: 100%; overflow-y: auto; -webkit-overflow-scrolling: touch; background: linear-gradient(180deg, #3a0816, #22040d); border: 1px solid var(--line); border-radius: 22px; padding: 18px 20px 22px; }
+  .sheet h2 { font-family: var(--serif); color: var(--gold-l); margin: 0 0 6px; font-size: 26px; }
+  .sec { border-top: 1px solid rgba(243,215,124,.18); margin-top: 16px; padding-top: 6px; }
+  .seg { display: -webkit-flex; display: flex; margin-top: 6px; }
+  .seg button { -webkit-flex: 1; flex: 1; margin-right: 6px; font-size: 15px; }
+  .seg button:last-child { margin-right: 0; }
+  .seg button.on { background: linear-gradient(180deg, #d9263e, #a30d24); border-color: var(--gold-l); }
+  .msg { font-size: 14px; margin-top: 8px; line-height: 1.4; }
+  .msg.ok { color: #7ef0b3; } .msg.err { color: #ff9aa6; }
+  details { margin-top: 10px; background: rgba(0,0,0,.22); border-radius: 12px; padding: 10px 12px; }
+  summary { color: var(--gold-l); font-weight: 600; cursor: pointer; outline: none; }
+  details ol { padding-left: 20px; margin: 8px 0 0; }
+  details li { margin: 6px 0; font-size: 14px; line-height: 1.45; color: var(--cream); }
+  details code { background: rgba(0,0,0,.35); padding: 1px 5px; border-radius: 5px; font-size: 13px; -webkit-user-select: all; user-select: all; }
+  label.chkrow { display: -webkit-flex; display: flex; -webkit-align-items: center; align-items: center; padding: 8px 0; font-size: 16px; }
+  label.chkrow input { width: 24px; height: 24px; min-height: 0; margin: 0 10px 0 0; -webkit-appearance: checkbox; appearance: checkbox; }
+  #geores button { display: block; width: 100%; text-align: left; margin-top: 6px; }
+
+  #toast { position: fixed; left: 50%; bottom: 96px; z-index: 30; -webkit-transform: translateX(-50%); transform: translateX(-50%); max-width: 80%; background: rgba(15,59,39,.96); border: 1px solid var(--gold); color: var(--cream); padding: 12px 18px; border-radius: 14px; font-size: 15px; box-shadow: 0 10px 30px rgba(0,0,0,.5); }
+  #toast.err { background: rgba(120,10,28,.97); }
+
+  /* ---------- vertical ---------- */
+  @media (orientation: portrait) {
+    #top { -webkit-flex-wrap: wrap; flex-wrap: wrap; }
+    #xmas { -webkit-order: 3; order: 3; -webkit-flex-basis: 100%; flex-basis: 100%; margin-top: 6px; }
+    #clock { font-size: 60px; }
+    .view.on { display: block; overflow-y: auto; -webkit-overflow-scrolling: touch; }
+    .card { margin: 0 0 12px; min-height: 380px; }
+    .card.auto { min-height: 0; }
+    #v-tv .card { min-height: 700px; }
+    #tvwrap { -webkit-flex-wrap: wrap; flex-wrap: wrap; }
+  }
+  @media (max-width: 1000px) and (orientation: landscape) {
+    #wx { min-width: 250px; } .wd { width: 50px; } #xmasbig { font-size: 38px; } #clock { font-size: 60px; }
+  }
+</style>
+</head>
+<body>
+<noscript>Este painel precisa de JavaScript.</noscript>
+<canvas id="snow"></canvas>
+<div id="garland"></div>
+
+<div id="app">
+  <header id="top">
+    <div id="clockbox">
+      <div id="clock">--:--</div>
+      <div id="date">&nbsp;</div>
+    </div>
+    <div id="xmas">
+      <div id="xmasbig">&nbsp;</div>
+      <div id="xmassub">&nbsp;</div>
+    </div>
+    <div id="wx">
+      <div id="wxnow"><span id="wxicon">⏳</span><span id="wxtemp">--°</span><span id="wxdesc">A carregar a meteorologia…</span></div>
+      <div id="wxdays"></div>
+    </div>
+  </header>
+
+  <main id="views">
+    <!-- CASA -->
+    <section class="view" id="v-casa">
+      <div class="card wide" id="lightcard">
+        <div class="chead">
+          <h2>Luzes</h2>
+          <div class="tools"><span id="lstatus"></span><button type="button" class="ghost small" id="ledit">Organizar</button> <button type="button" class="ghost small icon" id="lrefresh" aria-label="Atualizar">⟳</button></div>
+        </div>
+        <div id="lquick" class="hidden"></div>
+        <div id="lscenes" class="hidden"></div>
+        <div class="cbody"><div id="lerr" class="errbox hidden"></div><div id="lgrid"></div></div>
+      </div>
+      <div class="card" id="todaycard">
+        <div class="chead"><h2>Hoje</h2></div>
+        <div class="cbody">
+          <h3>Próximos eventos</h3>
+          <ul id="miniev"></ul>
+          <h3>Lista de compras</h3>
+          <ul id="minishop"></ul>
+        </div>
+        <div class="cfoot" id="minibud">
+          <h3>Orçamento do mês</h3>
+          <div class="bigline"><div><div class="money s" id="minileft">—</div></div><div><span class="lbl">gasto</span><div class="muted" id="minispent">—</div></div></div>
+          <div class="bar"><div id="minibar"></div></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- AGENDA -->
+    <section class="view" id="v-agenda">
+      <div class="card wide">
+        <div class="chead">
+          <h2>Calendário</h2>
+          <div class="tools" id="calnav"><button type="button" class="small icon" id="prevm">‹</button> <button type="button" class="small" id="todaym">hoje</button> <button type="button" class="small icon" id="nextm">›</button></div>
+        </div>
+        <div class="cbody">
+          <div id="gcal" class="hidden"></div>
+          <div id="localcal"><div id="monthname"></div><div id="grid"></div></div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="chead"><h2>Eventos</h2><button type="button" class="red small" id="evtoggle">+ Novo</button></div>
+        <div class="cbody">
+          <form id="evform" class="hidden" autocomplete="off">
+            <div class="row" style="margin-top:0"><input type="date" id="evdate"><input type="time" id="evtime" style="max-width:130px"></div>
+            <div class="row"><input type="text" id="evtext" placeholder="O que é?" autocapitalize="sentences"></div>
+            <div class="row"><button type="submit" class="red">Guardar</button><button type="button" class="ghost" id="evcancel">Cancelar</button></div>
+          </form>
+          <ul id="evlist"></ul>
+        </div>
+      </div>
+    </section>
+
+    <!-- COMPRAS -->
+    <section class="view" id="v-compras">
+      <div class="card">
+        <div class="chead"><h2>Lista de compras</h2><button type="button" class="ghost small hidden" id="shopclear"></button></div>
+        <form id="shopform" autocomplete="off">
+          <div class="row" style="margin-top:0"><input type="text" id="shopin" placeholder="Adicionar à lista…" autocapitalize="sentences"><button type="submit" class="red">Adicionar</button></div>
+        </form>
+        <div class="cbody" style="margin-top:8px"><ul id="shoplist"></ul></div>
+      </div>
+    </section>
+
+    <!-- ORÇAMENTO -->
+    <section class="view" id="v-orc">
+      <div class="card">
+        <div class="chead"><h2 id="budtitle">Orçamento</h2></div>
+        <div class="cbody">
+          <div class="bigline">
+            <div><span class="lbl">Restante</span><div class="money" id="budleft">—</div></div>
+            <div><span class="lbl">Gasto</span><div class="money s" id="budspent">—</div></div>
+          </div>
+          <div class="bar"><div id="barfill"></div></div>
+          <div class="row"><input type="text" id="limitin" inputmode="decimal" placeholder="Orçamento do mês (€)"><button type="button" class="green" id="limitset">Definir</button></div>
+          <h3>Por categoria</h3>
+          <div id="cats"></div>
+          <form id="expform" autocomplete="off">
+            <h3>Nova despesa</h3>
+            <div class="row" style="margin-top:0"><input type="text" id="expv" inputmode="decimal" placeholder="Valor (€)" style="max-width:140px"><select id="expc">
+              <option>Casa</option><option>Supermercado</option><option>Natal</option><option>Carro</option><option>Saúde</option><option>Lazer</option><option>Outros</option>
+            </select></div>
+            <div class="row"><input type="text" id="expt" placeholder="Descrição" autocapitalize="sentences"><button type="submit" class="red">Adicionar</button></div>
+          </form>
+        </div>
+      </div>
+      <div class="card">
+        <div class="chead"><h2>Últimas despesas</h2></div>
+        <div class="cbody"><ul id="explist"></ul></div>
+      </div>
+    </section>
+
+    <!-- TV -->
+    <section class="view" id="v-tv">
+      <div class="card">
+        <div class="chead"><h2>Vodafone TV</h2><span id="tvstatus"></span></div>
+        <div id="tvsetup" class="errbox hidden"></div>
+        <div id="tvwrap">
+          <div class="col">
+            <button type="button" class="red round" data-key="POWER" aria-label="Ligar ou desligar">⏻</button>
+            <div class="rocker" style="margin-top:10px"><button type="button" data-key="VOLUME_UP" aria-label="Volume mais">+</button><span>VOL</span><button type="button" data-key="VOLUME_DOWN" aria-label="Volume menos">−</button></div>
+            <button type="button" class="round" data-key="VOLUME_MUTE" aria-label="Sem som">🔇</button>
+          </div>
+          <div class="col">
+            <div class="dpad">
+              <button type="button" class="up" data-key="DPAD_UP" aria-label="Cima">▲</button>
+              <button type="button" class="left" data-key="DPAD_LEFT" aria-label="Esquerda">◀</button>
+              <button type="button" class="ok" data-key="DPAD_CENTER">OK</button>
+              <button type="button" class="right" data-key="DPAD_RIGHT" aria-label="Direita">▶</button>
+              <button type="button" class="down" data-key="DPAD_DOWN" aria-label="Baixo">▼</button>
+            </div>
+            <div class="tvrow">
+              <button type="button" class="ghost" data-key="BACK">↩ Voltar</button>
+              <button type="button" class="ghost" data-key="HOME">⌂ Início</button>
+              <button type="button" class="ghost" data-key="GUIDE">Guia</button>
+            </div>
+            <div class="tvrow">
+              <button type="button" class="round" data-key="MEDIA_REWIND" aria-label="Recuar">⏪</button>
+              <button type="button" class="round" data-key="MEDIA_PLAY_PAUSE" aria-label="Reproduzir ou pausa">⏯</button>
+              <button type="button" class="round" data-key="MEDIA_FAST_FORWARD" aria-label="Avançar">⏩</button>
+            </div>
+          </div>
+          <div class="col">
+            <div class="numpad" id="numpad"></div>
+            <div class="rocker" style="margin-top:8px;width:150px;border-radius:24px"><button type="button" data-key="CHANNEL_UP" style="height:52px" aria-label="Canal seguinte">▲ CH</button><button type="button" data-key="CHANNEL_DOWN" style="height:52px" aria-label="Canal anterior">▼ CH</button></div>
+          </div>
+        </div>
+        <div class="apps" id="tvapps">
+          <button type="button" class="green" data-app="com.netflix.ninja">Netflix</button>
+          <button type="button" class="green" data-app="com.google.android.youtube.tv">YouTube</button>
+          <button type="button" class="green" data-app="com.amazon.amazonvideo.livingroom">Prime Video</button>
+          <button type="button" class="green" data-app="com.disney.disneyplus">Disney+</button>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <nav id="tabs">
+    <button type="button" data-v="casa"><i>🏠</i>Casa</button>
+    <button type="button" data-v="agenda"><i>📅</i>Agenda</button>
+    <button type="button" data-v="compras"><i>🛒</i>Compras</button>
+    <button type="button" data-v="orc"><i>💶</i>Orçamento</button>
+    <button type="button" data-v="tv"><i>📺</i>TV</button>
+    <button type="button" class="cfg" id="cfgbtn" aria-label="Definições"><i>⚙</i>&nbsp;</button>
+  </nav>
+</div>
+
+<!-- DEFINIÇÕES -->
+<div id="modal" class="hidden">
+  <div class="sheet">
+    <div class="chead" style="margin:0"><h2>Definições</h2><button type="button" class="ghost" id="cfgclose">Fechar</button></div>
+
+    <div class="sec" id="sec-luzes">
+      <h3>Luzes</h3>
+      <div class="seg" id="lmode">
+        <button type="button" data-m="nenhuma">Nenhuma</button>
+        <button type="button" data-m="tuya">Smart Life</button>
+        <button type="button" data-m="ha">Home Assistant</button>
+      </div>
+      <div id="f-tuya">
+        <div class="row"><input type="url" id="c-ponte" placeholder="Endereço da ponte (https://….workers.dev)" autocapitalize="none" autocorrect="off" spellcheck="false"></div>
+        <div class="row"><input type="password" id="c-chave" placeholder="Chave da ponte" autocapitalize="none" autocorrect="off"><button type="button" class="green" id="t-tuya">Testar</button></div>
+        <div class="msg" id="m-tuya"></div>
+        <details>
+          <summary>Como ligar a Smart Life (cerca de 20 minutos, num computador)</summary>
+          <ol>
+            <li>Em <b>iot.tuya.com</b> crie uma conta (grátis). Vá a <b>Cloud → Development → Create Cloud Project</b>: Development Method <b>Smart Home</b>, Data Center <b>Central Europe</b>.</li>
+            <li>No projeto, abra <b>Devices → Link App Account → Add App Account</b> e leia o código QR com a app Smart Life (separador <b>Eu</b>, ícone de leitura no canto). As suas luzes aparecem na lista.</li>
+            <li>Em <b>Overview</b>, copie o <b>Access ID</b> e o <b>Access Secret</b>.</li>
+            <li>Em <b>dash.cloudflare.com</b> (conta grátis): <b>Workers &amp; Pages → Create → Worker</b>, dê o nome <code>luzes-casa</code> e carregue em <b>Deploy</b>. Depois <b>Edit code</b>: apague tudo, cole o conteúdo do ficheiro <code>ponte-luzes.js</code> e carregue em <b>Deploy</b>.</li>
+            <li>No Worker, em <b>Settings → Variables and Secrets</b>, crie: <code>TUYA_ACCESS_ID</code>, <code>TUYA_ACCESS_SECRET</code> (tipo Secret) e <code>PAINEL_CHAVE</code> (tipo Secret, uma palavra-passe inventada por si).</li>
+            <li>Aqui, escolha <b>Smart Life</b>, cole o endereço do Worker (aparece como <code>https://luzes-casa.….workers.dev</code>) e a chave, e carregue em <b>Testar</b>.</li>
+          </ol>
+          <p class="hint">A Tuya dá o serviço grátis por períodos de até 6 meses. Quando expirar, o painel avisa; renova-se em <b>Cloud → Cloud Services → IoT Core → Extend Trial Period</b>. Para poupar a quota gratuita, o painel só atualiza o estado das luzes de 5 em 5 minutos (e quando toca no ⟳).</p>
+        </details>
+      </div>
+      <div id="f-ha">
+        <div class="row"><input type="url" id="c-haurl" placeholder="Endereço (ex.: http://homeassistant.local:8123)" autocapitalize="none" autocorrect="off" spellcheck="false"></div>
+        <div class="row"><input type="password" id="c-hatoken" placeholder="Token de acesso de longa duração" autocapitalize="none" autocorrect="off"><button type="button" class="green" id="t-ha">Testar</button></div>
+        <div class="msg" id="m-ha"></div>
+      </div>
+    </div>
+
+    <div class="sec" id="sec-tv">
+      <h3>Vodafone TV</h3>
+      <p class="hint">O comando da TV funciona através do Home Assistant (integração Android TV Remote). Não existe forma de uma página web falar diretamente com a box.</p>
+      <div class="row"><select id="c-tv"><option value="">Escolher a TV (teste o Home Assistant primeiro)</option></select></div>
+      <details>
+        <summary>Como ligar a Vodafone TV</summary>
+        <ol>
+          <li>Precisa de um aparelho sempre ligado em casa com o <b>Home Assistant</b> (por exemplo um Home Assistant Green ou um Raspberry Pi).</li>
+          <li>No Home Assistant: <b>Definições → Dispositivos e serviços → Adicionar integração → Android TV Remote</b>. Escolha a box da Vodafone e escreva o código que aparece na televisão.</li>
+          <li>Opcional: adicione também a integração <b>Tuya</b> (entra com o código QR da Smart Life, sem conta de programador). Assim as luzes também passam pelo Home Assistant, sem quotas.</li>
+          <li>No seu perfil do Home Assistant → <b>Segurança → Tokens de acesso de longa duração → Criar token</b>.</li>
+          <li>Copie o <code>index.html</code> deste painel para a pasta <code>/config/www/painel/</code> do Home Assistant e abra no iPad <code>http://homeassistant.local:8123/local/painel/index.html</code>. Servido pelo Home Assistant, o iPad não bloqueia a ligação.</li>
+          <li>Aqui, cole o token em <b>Luzes → Home Assistant</b>, carregue em <b>Testar</b> e escolha a TV acima.</li>
+        </ol>
+        <p class="hint">Se abrir o painel pelo endereço do GitHub (https), o Safari bloqueia ligações a um Home Assistant em http. Nesse caso precisa de acesso https ao Home Assistant e de autorizar este endereço em <code>http: cors_allowed_origins</code>.</p>
+      </details>
+    </div>
+
+    <div class="sec">
+      <h3>Meteorologia</h3>
+      <div class="hint" id="c-local"></div>
+      <div class="row"><input type="text" id="c-geo" placeholder="Procurar localidade" autocapitalize="words"><button type="button" class="green" id="t-geo">Procurar</button></div>
+      <div id="geores"></div>
+    </div>
+
+    <div class="sec">
+      <h3>Google Calendar</h3>
+      <div class="row"><input type="text" id="c-gcal" placeholder="ID do calendário (opcional, tem de ser público)" autocapitalize="none" autocorrect="off"></div>
+    </div>
+
+    <div class="sec">
+      <h3>Aparência</h3>
+      <label class="chkrow"><input type="checkbox" id="c-neve"> Neve a cair</label>
+      <label class="chkrow"><input type="checkbox" id="c-grinalda"> Luzes de Natal no topo</label>
+      <p class="hint">Entre as 23h e as 7h o painel escurece. Toque no ecrã para o acender durante 2 minutos.</p>
+    </div>
+
+    <div class="row" style="margin-top:16px"><button type="button" class="red" id="cfgsave" style="-webkit-flex:1;flex:1">Guardar</button></div>
+
+    <div class="sec">
+      <p class="hint">Compras, orçamento, eventos e definições ficam guardados só neste iPad.</p>
+      <button type="button" class="ghost" id="wipe">Apagar todos os dados deste painel</button>
+    </div>
+  </div>
+</div>
+
+<div id="toast" class="hidden"></div>
+
+<script>
+(function () {
+  'use strict';
+
+  // ================= utilitários =================
+  var DIAS = ['domingo', 'segunda-feira', 'terça-feira', 'quarta-feira', 'quinta-feira', 'sexta-feira', 'sábado'];
+  var DIAS3 = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'];
+  var MESES = ['janeiro', 'fevereiro', 'março', 'abril', 'maio', 'junho', 'julho', 'agosto', 'setembro', 'outubro', 'novembro', 'dezembro'];
+  var MES3 = ['jan', 'fev', 'mar', 'abr', 'mai', 'jun', 'jul', 'ago', 'set', 'out', 'nov', 'dez'];
+  var XMAS_RE = /natal|árvore|arvore|pinheiro|presépio|presepio|enfeite|grinalda|estrela|xmas|christmas/i;
+
+  function $(id) { return document.getElementById(id); }
+  function pad(n) { return n < 10 ? '0' + n : '' + n; }
+  function iso(d) { return d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate()); }
+  function cap(s) { return s.charAt(0).toUpperCase() + s.slice(1); }
+  function trim(s) { return String(s).replace(/^\s+|\s+$/g, ''); }
+  function uid() { return Date.now().toString(36) + Math.random().toString(36).slice(2, 6); }
+  function esc(s) {
+    return String(s).replace(/[&<>"']/g, function (c) {
+      return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
+    });
+  }
+  function eur(n) {
+    var neg = n < 0; n = Math.abs(n);
+    var p = n.toFixed(2).split('.');
+    p[0] = p[0].replace(/\B(?=(\d{3})+(?!\d))/g, ' ');
+    return (neg ? '-' : '') + p[0] + ',' + p[1] + ' €';
+  }
+  function parseNum(s) {
+    s = String(s).replace(/\s/g, '').replace('€', '');
+    if (s.indexOf(',') > -1) { s = s.replace(/\./g, '').replace(',', '.'); }
+    var n = parseFloat(s);
+    return isNaN(n) ? null : n;
+  }
+  function closest(el, attr, stop) {
+    while (el && el !== stop) {
+      if (el.getAttribute && el.getAttribute(attr) !== null) { return el; }
+      el = el.parentNode;
+    }
+    return null;
+  }
+  function each(arr, fn) { for (var i = 0; i < arr.length; i++) { fn(arr[i], i); } }
+  function findBy(arr, k, v) { for (var i = 0; i < arr.length; i++) { if (arr[i][k] === v) { return arr[i]; } } return null; }
+
+  var store = (function () {
+    var mem = {}, ok = false;
+    try { localStorage.setItem('painel.__t', '1'); localStorage.removeItem('painel.__t'); ok = true; } catch (e) {}
+    return {
+      get: function (k, def) {
+        try {
+          var v = ok ? localStorage.getItem('painel.' + k) : mem[k];
+          return (v === null || v === undefined) ? def : JSON.parse(v);
+        } catch (e) { return def; }
+      },
+      set: function (k, v) {
+        var s = JSON.stringify(v);
+        if (ok) { try { localStorage.setItem('painel.' + k, s); return; } catch (e) {} }
+        mem[k] = s;
+      },
+      del: function (k) {
+        if (ok) { try { localStorage.removeItem('painel.' + k); } catch (e) {} }
+        delete mem[k];
+      }
+    };
+  })();
+
+  var toastTimer = null;
+  function toast(msg, isErr) {
+    var t = $('toast');
+    t.textContent = msg;
+    t.className = isErr ? 'err' : '';
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(function () { t.className = 'hidden'; }, isErr ? 5000 : 2600);
+  }
+
+  function req(method, url, headers, body, cb) {
+    var x, done = false;
+    function fin(err, data, st) { if (done) { return; } done = true; cb(err, data, st); }
+    try { x = new XMLHttpRequest(); x.open(method, url, true); } catch (e) { fin('Endereço inválido', null, 0); return; }
+    x.timeout = 15000;
+    for (var k in headers) { if (headers.hasOwnProperty(k)) { x.setRequestHeader(k, headers[k]); } }
+    x.onload = function () {
+      var d = null;
+      try { d = JSON.parse(x.responseText); } catch (e) {}
+      if (x.status >= 200 && x.status < 300) { fin(null, d, x.status); }
+      else { fin((d && (d.erro || d.message)) || ('Erro ' + x.status), d, x.status); }
+    };
+    x.onerror = function () { fin('Sem ligação ao servidor', null, 0); };
+    x.ontimeout = function () { fin('O servidor demorou demasiado a responder', null, 0); };
+    try { x.send(body || null); } catch (e) { fin('Pedido bloqueado pelo navegador', null, 0); }
+  }
+
+  // ================= configuração =================
+  var DEF = { local: 'Póvoa de Santa Iria', lat: 38.857, lon: -9.06, luzes: 'nenhuma', ponte: '', chave: '', haUrl: '', haToken: '', tv: '', neve: true, grinalda: true };
+  function loadCfg() {
+    var c = store.get('cfg', {}) || {}, o = {};
+    for (var k in DEF) { if (DEF.hasOwnProperty(k)) { o[k] = c.hasOwnProperty(k) ? c[k] : DEF[k]; } }
+    return o;
+  }
+  var cfg = loadCfg();
+  function saveCfg() { store.set('cfg', cfg); }
+
+  // Configuração por endereço: ?ponte=…&chave=…  ou  ?ha=…&token=…
+  (function () {
+    var s = (location.search || '') + '&' + (location.hash || '').replace(/^#/, '');
+    var m = {}, changed = false;
+    s.replace(/(?:^|[?&])([a-zA-Z]+)=([^&]*)/g, function (all, k, v) {
+      try { m[k] = decodeURIComponent(v.replace(/\+/g, ' ')); } catch (e) {}
+      return all;
+    });
+    if (m.ponte) { cfg.ponte = m.ponte; cfg.luzes = 'tuya'; changed = true; }
+    if (m.chave) { cfg.chave = m.chave; changed = true; }
+    if (m.ha) { cfg.haUrl = m.ha; if (cfg.luzes === 'nenhuma') { cfg.luzes = 'ha'; } changed = true; }
+    if (m.token) { cfg.haToken = m.token; if (cfg.luzes === 'nenhuma') { cfg.luzes = 'ha'; } changed = true; }
+    if (changed) {
+      saveCfg();
+      try { history.replaceState(null, '', location.pathname); } catch (e) {}
+    }
+  })();
+  // Servido pelo próprio Home Assistant?
+  var SERVED_BY_HA = location.port === '8123' || /^\/local\//.test(location.pathname);
+  function haBase() { return trim(cfg.haUrl || (SERVED_BY_HA ? location.protocol + '//' + location.host : '')).replace(/\/+$/, ''); }
+
+  // ================= decoração =================
+  function buildGarland() {
+    var g = $('garland');
+    var w = window.innerWidth || 1024;
+    var n = Math.max(8, Math.floor(w / 42));
+    var seg = 20, path = 'M0,2', h = '', i;
+    for (i = 0; i < n; i++) { path += ' Q' + (i * seg + seg / 2) + ',14 ' + ((i + 1) * seg) + ',2'; }
+    h += '<svg viewBox="0 0 ' + (n * seg) + ' 14" preserveAspectRatio="none"><path d="' + path + '"/></svg>';
+    for (i = 0; i < n; i++) {
+      var left = ((i + 0.5) / n * 100).toFixed(3);
+      var delay = ((i * 0.37) % 3).toFixed(2);
+      h += '<span class="bulb b' + (i % 4) + '" style="left:' + left + '%;-webkit-animation-delay:' + delay + 's;animation-delay:' + delay + 's"></span>';
+    }
+    g.innerHTML = h;
+  }
+
+  var snow = { flakes: [], run: false, ctx: null, w: 0, h: 0, frame: 0 };
+  function snowSize() {
+    var c = $('snow'), r = window.devicePixelRatio || 1;
+    snow.w = window.innerWidth; snow.h = window.innerHeight;
+    c.width = snow.w * r; c.height = snow.h * r;
+    snow.ctx = c.getContext ? c.getContext('2d') : null;
+    if (snow.ctx) { snow.ctx.setTransform(r, 0, 0, r, 0, 0); }
+  }
+  function snowInit() {
+    snow.flakes = [];
+    for (var i = 0; i < 42; i++) {
+      snow.flakes.push({ x: Math.random() * snow.w, y: Math.random() * snow.h, r: 1 + Math.random() * 2.4, s: 0.35 + Math.random() * 0.8, p: Math.random() * 6.28, a: 0.35 + Math.random() * 0.5 });
+    }
+  }
+  function snowStep() {
+    if (!snow.run) { return; }
+    snow.frame++;
+    if (snow.frame % 2 === 0 && snow.ctx) {
+      var c = snow.ctx;
+      c.clearRect(0, 0, snow.w, snow.h);
+      for (var i = 0; i < snow.flakes.length; i++) {
+        var f = snow.flakes[i];
+        f.y += f.s * 2; f.p += 0.02; f.x += Math.sin(f.p) * 0.6;
+        if (f.y > snow.h + 5) { f.y = -5; f.x = Math.random() * snow.w; }
+        c.beginPath(); c.arc(f.x, f.y, f.r, 0, 6.2832);
+        c.fillStyle = 'rgba(255,250,240,' + f.a + ')'; c.fill();
+      }
+    }
+    (window.requestAnimationFrame || function (fn) { return setTimeout(fn, 16); })(snowStep);
+  }
+  function snowUpdate() {
+    var want = cfg.neve && !document.hidden && document.body.className.indexOf('night') === -1;
+    if (want && !snow.run) { snow.run = true; snowStep(); }
+    if (!want && snow.run) { snow.run = false; if (snow.ctx) { snow.ctx.clearRect(0, 0, snow.w, snow.h); } }
+  }
+  function applyDecor() {
+    var cls = document.body.className.replace(/\s*nogarland/g, '');
+    document.body.className = cls + (cfg.grinalda ? '' : ' nogarland');
+    if (cfg.grinalda) { buildGarland(); }
+    snowUpdate();
+  }
+
+  // ================= relógio, data, Natal, noite =================
+  var lastHM = '', lastDay = '', wakeUntil = 0;
+  function daysBetween(a, b) {
+    return Math.round((new Date(b.getFullYear(), b.getMonth(), b.getDate()) - new Date(a.getFullYear(), a.getMonth(), a.getDate())) / 86400000);
+  }
+  function xmasText(d) {
+    var y = d.getFullYear(), m = d.getMonth(), day = d.getDate();
+    if (m === 11 && day === 24) { return ['Hoje é Consoada', 'Boa noite de Natal'] ; }
+    if (m === 11 && day === 25) { return ['Feliz Natal!', 'Boas Festas em família']; }
+    if (m === 11 && day === 31) { return ['Última noite do ano', 'Feliz Ano Novo à meia-noite']; }
+    if (m === 0 && day === 1) { return ['Feliz Ano Novo!', 'Bem-vindo, ' + y]; }
+    if (m === 0 && day <= 6) { return ['Boas Festas', day === 6 ? 'Hoje é Dia de Reis' : 'Dia de Reis a 6 de janeiro']; }
+    if (m === 11 && day > 25) { var a = daysBetween(d, new Date(y + 1, 0, 1)); return ['Boas Festas', 'Faltam ' + a + ' dias para o Ano Novo']; }
+    var target = new Date(y, 11, 25);
+    if (d > target) { target = new Date(y + 1, 11, 25); }
+    var n = daysBetween(d, target);
+    return [n === 1 ? 'Falta 1 dia' : 'Faltam ' + n + ' dias', 'para o Natal'];
+  }
+  function setNight(h) {
+    var night = (h >= 23 || h < 7) && Date.now() > wakeUntil;
+    var cls = document.body.className.replace(/\s*night/g, '');
+    document.body.className = cls + (night ? ' night' : '');
+    snowUpdate();
+  }
+  function tick() {
+    var n = new Date();
+    var hm = pad(n.getHours()) + ':' + pad(n.getMinutes());
+    if (hm !== lastHM) {
+      lastHM = hm;
+      $('clock').textContent = hm;
+      setNight(n.getHours());
+    }
+    var k = iso(n);
+    if (k !== lastDay) {
+      lastDay = k;
+      $('date').textContent = cap(DIAS[n.getDay()]) + ', ' + n.getDate() + ' de ' + MESES[n.getMonth()];
+      var x = xmasText(n);
+      $('xmasbig').textContent = x[0];
+      $('xmassub').textContent = x[1];
+      view = { y: n.getFullYear(), m: n.getMonth() };
+      pruneEvents();
+      renderCal(); renderEvents(); renderBud(); renderShop();
+    }
+  }
+  function wake() {
+    if (document.body.className.indexOf('night') > -1) {
+      wakeUntil = Date.now() + 120000;
+      setNight(new Date().getHours());
+      setTimeout(function () { setNight(new Date().getHours()); }, 121000);
+    }
+  }
+
+  // ================= meteorologia =================
+  function wxInfo(c) {
+    if (c === 0) { return ['☀️', 'Céu limpo']; }
+    if (c === 1) { return ['🌤️', 'Pouco nublado']; }
+    if (c === 2) { return ['⛅', 'Parcialmente nublado']; }
+    if (c === 3) { return ['☁️', 'Nublado']; }
+    if (c === 45 || c === 48) { return ['🌫️', 'Nevoeiro']; }
+    if (c >= 51 && c <= 57) { return ['🌦️', 'Chuvisco']; }
+    if (c >= 61 && c <= 65) { return ['🌧️', 'Chuva']; }
+    if (c === 66 || c === 67) { return ['🌧️', 'Chuva gelada']; }
+    if (c >= 71 && c <= 77) { return ['❄️', 'Neve']; }
+    if (c >= 80 && c <= 82) { return ['🌦️', 'Aguaceiros']; }
+    if (c === 85 || c === 86) { return ['🌨️', 'Aguaceiros de neve']; }
+    if (c >= 95) { return ['⛈️', 'Trovoada']; }
+    return ['🌡️', ''];
+  }
+  function r0(x) { return (x === null || x === undefined) ? '--' : Math.round(x); }
+  function wxUrl() {
+    return 'https://api.open-meteo.com/v1/forecast?latitude=' + cfg.lat + '&longitude=' + cfg.lon +
+      '&current=temperature_2m,weather_code' +
+      '&daily=weather_code,temperature_2m_max,temperature_2m_min,precipitation_probability_max' +
+      '&timezone=auto&forecast_days=5';
+  }
+  function drawWx(j, staleT) {
+    var cur = j.current || {}, dl = j.daily || {};
+    var codes = dl.weather_code || dl.weathercode || [];
+    var tmax = dl.temperature_2m_max || [], tmin = dl.temperature_2m_min || [], pp = dl.precipitation_probability_max || [], times = dl.time || [];
+    var code = cur.weather_code !== undefined ? cur.weather_code : codes[0];
+    var info = wxInfo(code);
+    $('wxicon').textContent = info[0];
+    $('wxtemp').innerHTML = r0(cur.temperature_2m) + '<span class="deg">°</span>';
+    var line2 = r0(tmax[0]) + '° / ' + r0(tmin[0]) + '°';
+    if (pp[0] !== undefined && pp[0] !== null) { line2 += ' · chuva ' + pp[0] + '%'; }
+    var extra = esc(cfg.local);
+    if (staleT) { var sd = new Date(staleT); extra = 'dados das ' + pad(sd.getHours()) + ':' + pad(sd.getMinutes()); }
+    $('wxdesc').innerHTML = esc(info[1]) + '<br><small>' + esc(line2) + '<br>' + extra + '</small>';
+    var h = '';
+    for (var i = 0; i < times.length && i < 5; i++) {
+      var p = times[i].split('-');
+      var dow = new Date(+p[0], +p[1] - 1, +p[2]).getDay();
+      h += '<div class="wd">' + (i === 0 ? 'Hoje' : DIAS3[dow]) + '<b>' + wxInfo(codes[i])[0] + '</b><span>' + r0(tmax[i]) + '°</span> ' + r0(tmin[i]) + '°</div>';
+    }
+    $('wxdays').innerHTML = h;
+  }
+  var wxTimer = null;
+  function wxFail() {
+    var c = store.get('wxcache', null);
+    if (c && c.j && c.lat === cfg.lat && Date.now() - c.t < 6 * 3600 * 1000) {
+      try { drawWx(c.j, c.t); } catch (e) {}
+    } else {
+      $('wxicon').textContent = '⚠️';
+      $('wxtemp').textContent = '--°';
+      $('wxdesc').textContent = 'Meteorologia indisponível';
+      $('wxdays').innerHTML = '';
+    }
+    clearTimeout(wxTimer); wxTimer = setTimeout(loadWx, 5 * 60 * 1000);
+  }
+  function loadWx() {
+    clearTimeout(wxTimer);
+    req('GET', wxUrl(), {}, null, function (err, j) {
+      if (err || !j || !j.daily) { wxFail(); return; }
+      try { drawWx(j); } catch (e) { wxFail(); return; }
+      store.set('wxcache', { t: Date.now(), j: j, lat: cfg.lat });
+      wxTimer = setTimeout(loadWx, 30 * 60 * 1000);
+    });
+  }
+
+  // ================= separadores =================
+  var curView = store.get('tab', 'casa');
+  function showView(v) {
+    if (!$('v-' + v)) { v = 'casa'; }
+    curView = v;
+    each(document.querySelectorAll('.view'), function (el) { el.className = 'view' + (el.id === 'v-' + v ? ' on' : ''); });
+    each(document.querySelectorAll('#tabs button[data-v]'), function (b) { b.className = b.getAttribute('data-v') === v ? 'on' : ''; });
+    store.set('tab', v);
+    if (v === 'casa') { loadLights(false); }
+    if (v === 'tv') { refreshTV(); }
+  }
+  $('tabs').addEventListener('click', function (ev) {
+    var b = closest(ev.target, 'data-v', $('tabs'));
+    if (b) { showView(b.getAttribute('data-v')); }
+  });
+
+  // ================= agenda =================
+  var now0 = new Date();
+  var view = { y: now0.getFullYear(), m: now0.getMonth() };
+  function pruneEvents() {
+    var evs = store.get('events', []);
+    var lim = new Date(); lim.setDate(lim.getDate() - 14);
+    var k = iso(lim);
+    var keep = evs.filter(function (e) { return e.d >= k; });
+    if (keep.length !== evs.length) { store.set('events', keep); }
+  }
+  function renderCal() {
+    var y = view.y, m = view.m;
+    $('monthname').textContent = cap(MESES[m]) + ' ' + y;
+    var startDow = (new Date(y, m, 1).getDay() + 6) % 7;
+    var dim = new Date(y, m + 1, 0).getDate();
+    var by = {};
+    each(store.get('events', []), function (e) { by[e.d] = true; });
+    var todayIso = iso(new Date());
+    var h = '', i, d;
+    each(['S', 'T', 'Q', 'Q', 'S', 'S', 'D'], function (l) { h += '<div class="dow">' + l + '</div>'; });
+    for (i = 0; i < startDow; i++) { h += '<div class="dow"></div>'; }
+    for (d = 1; d <= dim; d++) {
+      var k = y + '-' + pad(m + 1) + '-' + pad(d);
+      var cls = 'day' + (k === todayIso ? ' today' : '') + (by[k] ? ' has' : '') + (m === 11 && (d === 24 || d === 25) ? ' xmas' : '');
+      h += '<div class="' + cls + '" data-d="' + k + '">' + d + '</div>';
+    }
+    $('grid').innerHTML = h;
+  }
+  function dayLabel(k) {
+    var p = k.split('-');
+    var d = new Date(+p[0], +p[1] - 1, +p[2]);
+    var diff = daysBetween(new Date(), d);
+    if (diff === 0) { return 'Hoje'; }
+    if (diff === 1) { return 'Amanhã'; }
+    return DIAS3[d.getDay()] + ' ' + d.getDate() + ' ' + MES3[d.getMonth()];
+  }
+  function upcoming(max) {
+    var todayIso = iso(new Date());
+    return store.get('events', []).filter(function (e) { return e.d >= todayIso; }).sort(function (a, b) {
+      var ka = a.d + (a.t || '00:00'), kb = b.d + (b.t || '00:00');
+      return ka < kb ? -1 : (ka > kb ? 1 : 0);
+    }).slice(0, max);
+  }
+  function evItem(e, del) {
+    return '<li class="item" data-id="' + e.id + '"><span class="when">' + dayLabel(e.d) + (e.t ? ' · ' + esc(e.t) : '') + '</span>' +
+      '<span class="txt">' + esc(e.x) + '</span>' + (del ? '<button type="button" class="del" data-del="1" aria-label="Apagar">×</button>' : '') + '</li>';
+  }
+  function renderEvents() {
+    var up = upcoming(30), h = '';
+    each(up, function (e) { h += evItem(e, true); });
+    $('evlist').innerHTML = h || '<li class="empty">Sem eventos marcados.</li>';
+    var mini = '';
+    each(upcoming(4), function (e) { mini += evItem(e, false); });
+    $('miniev').innerHTML = mini || '<li class="empty">Nada marcado. Toque num dia da Agenda para marcar.</li>';
+  }
+  function showEvForm(dateIso) {
+    $('evform').className = '';
+    $('evdate').value = dateIso || iso(new Date());
+    if (curView !== 'agenda') { showView('agenda'); }
+    try { $('evtext').focus(); } catch (e) {}
+  }
+  function hideEvForm() { $('evform').className = 'hidden'; }
+  $('prevm').addEventListener('click', function () { view.m--; if (view.m < 0) { view.m = 11; view.y--; } renderCal(); });
+  $('nextm').addEventListener('click', function () { view.m++; if (view.m > 11) { view.m = 0; view.y++; } renderCal(); });
+  $('todaym').addEventListener('click', function () { var n = new Date(); view = { y: n.getFullYear(), m: n.getMonth() }; renderCal(); });
+  $('grid').addEventListener('click', function (ev) {
+    var el = closest(ev.target, 'data-d', $('grid'));
+    if (el) { showEvForm(el.getAttribute('data-d')); }
+  });
+  $('evtoggle').addEventListener('click', function () { if ($('evform').className === 'hidden') { showEvForm(); } else { hideEvForm(); } });
+  $('evcancel').addEventListener('click', hideEvForm);
+  $('evform').addEventListener('submit', function (ev) {
+    ev.preventDefault();
+    var d = $('evdate').value, t = $('evtime').value, x = trim($('evtext').value);
+    if (!d || !x) { return; }
+    var evs = store.get('events', []);
+    evs.push({ id: uid(), d: d, t: t, x: x });
+    store.set('events', evs);
+    $('evtext').value = ''; $('evtime').value = '';
+    hideEvForm(); renderCal(); renderEvents();
+    toast('Evento guardado');
+  });
+  $('evlist').addEventListener('click', function (ev) {
+    if (!closest(ev.target, 'data-del', $('evlist'))) { return; }
+    var li = closest(ev.target, 'data-id', $('evlist'));
+    if (!li) { return; }
+    var id = li.getAttribute('data-id');
+    store.set('events', store.get('events', []).filter(function (e) { return e.id !== id; }));
+    renderCal(); renderEvents();
+  });
+  $('miniev').addEventListener('click', function () { showView('agenda'); });
+  $('minibud').addEventListener('click', function () { showView('orc'); });
+  function applyGcal() {
+    var id = store.get('gcal', '');
+    if (id) {
+      $('gcal').className = '';
+      $('localcal').className = 'hidden';
+      $('calnav').className = 'tools hidden';
+      $('gcal').innerHTML = '<iframe src="https://calendar.google.com/calendar/embed?src=' + encodeURIComponent(id) +
+        '&ctz=Europe%2FLisbon&hl=pt_PT&mode=AGENDA&showTitle=0&showNav=0&showPrint=0&showTabs=0&showCalendars=0&showTz=0" title="Google Calendar"></iframe>';
+    } else {
+      $('gcal').className = 'hidden';
+      $('gcal').innerHTML = '';
+      $('localcal').className = '';
+      $('calnav').className = 'tools';
+    }
+  }
+
+  // ================= compras =================
+  function shopItem(i, del) {
+    return '<li class="item' + (i.done ? ' done' : '') + '" data-id="' + i.id + '"><span class="chk"></span><span class="txt">' + esc(i.x) + '</span>' +
+      (del ? '<button type="button" class="del" data-del="1" aria-label="Apagar">×</button>' : '') + '</li>';
+  }
+  function renderShop() {
+    var items = store.get('shop', []);
+    var todo = items.filter(function (i) { return !i.done; });
+    var done = items.filter(function (i) { return i.done; });
+    var h = '';
+    each(todo.concat(done), function (i) { h += shopItem(i, true); });
+    $('shoplist').innerHTML = h || '<li class="empty">A lista está vazia.</li>';
+    var btn = $('shopclear');
+    if (done.length) { btn.className = 'ghost small'; btn.textContent = 'Limpar comprados (' + done.length + ')'; }
+    else { btn.className = 'ghost small hidden'; }
+    var mini = '';
+    each(todo.slice(0, 4), function (i) { mini += shopItem(i, false); });
+    if (todo.length > 4) { mini += '<li class="more" data-go="compras">+ ' + (todo.length - 4) + ' na lista</li>'; }
+    $('minishop').innerHTML = mini || '<li class="empty">Nada para comprar.</li>';
+  }
+  function toggleShop(id) {
+    var items = store.get('shop', []);
+    each(items, function (i) { if (i.id === id) { i.done = !i.done; } });
+    store.set('shop', items);
+    renderShop();
+  }
+  $('shopform').addEventListener('submit', function (ev) {
+    ev.preventDefault();
+    var x = trim($('shopin').value);
+    if (!x) { return; }
+    var items = store.get('shop', []);
+    items.push({ id: uid(), x: x, done: false });
+    store.set('shop', items);
+    $('shopin').value = '';
+    renderShop();
+  });
+  $('shoplist').addEventListener('click', function (ev) {
+    var li = closest(ev.target, 'data-id', $('shoplist'));
+    if (!li) { return; }
+    var id = li.getAttribute('data-id');
+    if (closest(ev.target, 'data-del', $('shoplist'))) {
+      store.set('shop', store.get('shop', []).filter(function (i) { return i.id !== id; }));
+      renderShop();
+    } else { toggleShop(id); }
+  });
+  $('minishop').addEventListener('click', function (ev) {
+    if (closest(ev.target, 'data-go', $('minishop'))) { showView('compras'); return; }
+    var li = closest(ev.target, 'data-id', $('minishop'));
+    if (li) { toggleShop(li.getAttribute('data-id')); }
+  });
+  $('shopclear').addEventListener('click', function () {
+    store.set('shop', store.get('shop', []).filter(function (i) { return !i.done; }));
+    renderShop();
+  });
+
+  // ================= orçamento =================
+  function setBar(el, spent, lim) {
+    if (lim > 0) {
+      var pct = Math.min(100, Math.max(0, spent / lim * 100));
+      el.style.width = pct + '%';
+      el.className = spent > lim ? 'over' : (pct >= 85 ? 'mid' : '');
+    } else { el.style.width = '0'; el.className = ''; }
+  }
+  function renderBud() {
+    var lim = store.get('limit', 0);
+    var mk = iso(new Date()).slice(0, 7);
+    var month = store.get('expenses', []).filter(function (e) { return e.d.slice(0, 7) === mk; });
+    var spent = 0, cats = {};
+    each(month, function (e) { spent += e.v; cats[e.c] = (cats[e.c] || 0) + e.v; });
+    $('budtitle').textContent = 'Orçamento · ' + MESES[new Date().getMonth()];
+    $('budspent').textContent = eur(spent);
+    $('minispent').textContent = eur(spent);
+    var left = $('budleft'), mleft = $('minileft');
+    if (lim > 0) {
+      var rest = lim - spent;
+      left.textContent = eur(rest); left.className = 'money' + (rest < 0 ? ' neg' : '');
+      mleft.textContent = eur(rest) + ' restantes'; mleft.className = 'money s' + (rest < 0 ? ' neg' : '');
+    } else {
+      left.textContent = '—'; left.className = 'money';
+      mleft.textContent = 'Sem orçamento definido'; mleft.className = 'money s';
+    }
+    setBar($('barfill'), spent, lim);
+    setBar($('minibar'), spent, lim);
+    var ch = '';
+    each(Object.keys(cats).sort(function (a, b) { return cats[b] - cats[a]; }), function (c) {
+      ch += '<span class="chip">' + esc(c) + ' ' + eur(cats[c]) + '</span>';
+    });
+    $('cats').innerHTML = ch || '<span class="muted">—</span>';
+    var h = '';
+    each(month.slice().reverse().slice(0, 30), function (e) {
+      var dd = e.d.split('-');
+      h += '<li class="item" data-id="' + e.id + '"><span class="txt">' + esc(e.t || e.c) + '<small>' + esc(e.c) + ' · ' + dd[2] + '/' + dd[1] + '</small></span>' +
+        '<span class="amt">' + eur(e.v) + '</span><button type="button" class="del" data-del="1" aria-label="Apagar">×</button></li>';
+    });
+    $('explist').innerHTML = h || '<li class="empty">Ainda sem despesas este mês.</li>';
+  }
+  $('limitset').addEventListener('click', function () {
+    var n = parseNum($('limitin').value);
+    if (n === null || n < 0) { return; }
+    store.set('limit', Math.round(n * 100) / 100);
+    $('limitin').value = '';
+    renderBud();
+  });
+  $('expform').addEventListener('submit', function (ev) {
+    ev.preventDefault();
+    var v = parseNum($('expv').value);
+    if (v === null || v <= 0) { return; }
+    var ex = store.get('expenses', []);
+    ex.push({ id: uid(), d: iso(new Date()), v: Math.round(v * 100) / 100, t: trim($('expt').value), c: $('expc').value });
+    store.set('expenses', ex);
+    $('expv').value = ''; $('expt').value = '';
+    renderBud();
+  });
+  $('explist').addEventListener('click', function (ev) {
+    if (!closest(ev.target, 'data-del', $('explist'))) { return; }
+    var li = closest(ev.target, 'data-id', $('explist'));
+    if (!li) { return; }
+    var id = li.getAttribute('data-id');
+    store.set('expenses', store.get('expenses', []).filter(function (e) { return e.id !== id; }));
+    renderBud();
+  });
+
+  // ================= luzes: fornecedores =================
+  var TUYA = {
+    call: function (obj, cb) {
+      obj.chave = cfg.chave;
+      req('POST', trim(cfg.ponte).replace(/\/+$/, '') + '/', { 'Content-Type': 'text/plain;charset=UTF-8' }, JSON.stringify(obj), function (err, d) {
+        if (err) { cb(err); return; }
+        if (!d || !d.ok) { cb((d && d.erro) || 'A ponte não respondeu como esperado'); return; }
+        cb(null, d);
+      });
+    },
+    list: function (cb) {
+      TUYA.call({ acao: 'dispositivos' }, function (err, d) {
+        if (err) { cb(err); return; }
+        L.uid = d.uid || null;
+        var out = [];
+        each(d.dispositivos || [], function (x) {
+          var pct = null;
+          if (x.brilho && typeof x.brilho.valor === 'number') { pct = Math.max(1, Math.min(100, Math.round((x.brilho.valor - x.brilho.min) / (x.brilho.max - x.brilho.min) * 100))); }
+          out.push({ key: x.chave, id: x.id, nome: x.nome, tipo: x.tipo, online: x.online, ligado: x.ligado, brilho: pct, podeBrilho: !!x.brilho, podeCor: !!x.cor, podeTemp: !!x.temp, t: x });
+        });
+        cb(null, out);
+      });
+    },
+    scenes: function (cb) {
+      TUYA.call({ acao: 'cenas', uid: L.uid }, function (err, d) {
+        if (err) { cb(err); return; }
+        var out = [];
+        each(d.cenas || [], function (s) { out.push({ key: s.casa + ':' + s.id, nome: s.nome, casa: s.casa, id: s.id }); });
+        cb(null, out);
+      });
+    },
+    scene: function (sc, cb) { TUYA.call({ acao: 'cena', casa: sc.casa, id: sc.id }, cb); },
+    cmd: function (dev, cmds, cb) { TUYA.call({ acao: 'comando', id: dev.id, comandos: cmds }, cb); },
+    setOn: function (dev, on, cb) { TUYA.cmd(dev, [{ code: dev.t.sw, value: on }], cb); },
+    setBright: function (dev, pct, cb) {
+      var t = dev.t, cmds = [{ code: t.sw, value: true }];
+      if (t.modo && t.modo.valor === 'colour' && t.cor && t.cor.valor) {
+        var c = t.cor.valor;
+        cmds.push({ code: t.cor.code, value: { h: c.h, s: c.s, v: Math.max(1, Math.round(pct / 100 * t.cor.vmax)) } });
+      } else if (t.brilho) {
+        cmds.push({ code: t.brilho.code, value: Math.round(t.brilho.min + (t.brilho.max - t.brilho.min) * pct / 100) });
+      }
+      TUYA.cmd(dev, cmds, cb);
+    },
+    setColor: function (dev, hsv, cb) {
+      var t = dev.t, cmds = [{ code: t.sw, value: true }];
+      if (t.modo) { cmds.push({ code: t.modo.code, value: 'colour' }); }
+      var val = { h: hsv.h, s: Math.round(hsv.s / 100 * t.cor.smax), v: Math.round(hsv.v / 100 * t.cor.vmax) };
+      cmds.push({ code: t.cor.code, value: val });
+      TUYA.cmd(dev, cmds, function (err) {
+        if (!err) { t.cor.valor = val; if (t.modo) { t.modo.valor = 'colour'; } }
+        cb(err);
+      });
+    },
+    setWarm: function (dev, cb) {
+      var t = dev.t, cmds = [{ code: t.sw, value: true }];
+      if (t.modo) { cmds.push({ code: t.modo.code, value: 'white' }); }
+      if (t.temp) { cmds.push({ code: t.temp.code, value: t.temp.min }); }
+      if (t.brilho) { cmds.push({ code: t.brilho.code, value: t.brilho.max }); }
+      TUYA.cmd(dev, cmds, function (err) { if (!err && t.modo) { t.modo.valor = 'white'; } cb(err); });
+    }
+  };
+
+  var HA = {
+    api: function (method, path, body, cb) {
+      var base = haBase();
+      if (!base) { cb('Falta o endereço do Home Assistant'); return; }
+      req(method, base + path, { 'Authorization': 'Bearer ' + trim(cfg.haToken), 'Content-Type': 'application/json' }, body ? JSON.stringify(body) : null, function (err, d, st) {
+        if (st === 401) { cb('O Home Assistant recusou o token'); return; }
+        if (err && st === 0 && location.protocol === 'https:' && /^http:/.test(base)) { cb('O Safari bloqueia o Home Assistant em http a partir desta página https. Veja a ajuda da TV nas definições.'); return; }
+        cb(err, d);
+      });
+    },
+    svc: function (domain, service, data, cb) { HA.api('POST', '/api/services/' + domain + '/' + service, data, function (err) { cb(err); }); },
+    states: function (cb) {
+      HA.api('GET', '/api/states', null, function (err, arr) {
+        if (!err && !(arr && arr.length !== undefined)) { err = 'Resposta inesperada do Home Assistant'; }
+        if (!err) { L.ha = arr; }
+        cb(err, arr);
+      });
+    },
+    list: function (cb) {
+      HA.states(function (err, arr) {
+        if (err) { cb(err); return; }
+        var out = [];
+        each(arr, function (e) {
+          var dom = e.entity_id.split('.')[0];
+          if (dom !== 'light' && dom !== 'switch') { return; }
+          var a = e.attributes || {};
+          var modes = a.supported_color_modes || [];
+          var md = modes.join(',');
+          var podeBrilho = dom === 'light' && /brightness|color_temp|hs|xy|rgb|white/.test(md);
+          out.push({
+            key: e.entity_id, id: e.entity_id, dom: dom, nome: a.friendly_name || e.entity_id,
+            tipo: dom === 'light' ? 'luz' : (/luz|light|candeeiro|lâmpada/i.test(a.friendly_name || '') ? 'luz' : 'tomada'),
+            online: e.state !== 'unavailable', ligado: e.state === 'on',
+            brilho: typeof a.brightness === 'number' ? Math.max(1, Math.round(a.brightness / 255 * 100)) : null,
+            podeBrilho: podeBrilho, podeCor: /hs|xy|rgb/.test(md), podeTemp: /color_temp/.test(md)
+          });
+        });
+        out.sort(sortDevs);
+        cb(null, out);
+      });
+    },
+    scenes: function (cb) {
+      var out = [];
+      each(L.ha || [], function (e) {
+        if (e.entity_id.indexOf('scene.') === 0) { out.push({ key: e.entity_id, nome: (e.attributes && e.attributes.friendly_name) || e.entity_id }); }
+      });
+      cb(null, out);
+    },
+    scene: function (sc, cb) { HA.svc('scene', 'turn_on', { entity_id: sc.key }, cb); },
+    setOn: function (dev, on, cb) { HA.svc(dev.dom, on ? 'turn_on' : 'turn_off', { entity_id: dev.id }, cb); },
+    setBright: function (dev, pct, cb) { HA.svc('light', 'turn_on', { entity_id: dev.id, brightness_pct: pct }, cb); },
+    setColor: function (dev, hsv, cb) { HA.svc('light', 'turn_on', { entity_id: dev.id, hs_color: [hsv.h, hsv.s], brightness_pct: hsv.v }, cb); },
+    setWarm: function (dev, cb) {
+      var d = { entity_id: dev.id };
+      if (dev.podeTemp) { d.color_temp_kelvin = 2700; }
+      if (dev.podeBrilho) { d.brightness_pct = 100; }
+      HA.svc(dev.dom === 'light' ? 'light' : dev.dom, 'turn_on', d, cb);
+    }
+  };
+
+  function sortDevs(a, b) {
+    if (a.tipo !== b.tipo) { return a.tipo === 'luz' ? -1 : (b.tipo === 'luz' ? 1 : 0); }
+    return a.nome < b.nome ? -1 : (a.nome > b.nome ? 1 : 0);
+  }
+  function provider() {
+    if (cfg.luzes === 'tuya' && trim(cfg.ponte) && trim(cfg.chave)) { return TUYA; }
+    if (cfg.luzes === 'ha' && haBase() && trim(cfg.haToken)) { return HA; }
+    return null;
+  }
+
+  // ================= luzes: estado e ecrã =================
+  var L = { devs: store.get('devcache', []), scenes: [], last: 0, scAt: 0, loading: false, err: '', editing: false, uid: null, ha: null, prov: null };
+  var hidden = store.get('ocultos', []);
+  function isHidden(k) { return hidden.indexOf(k) > -1; }
+
+  function loadLights(force) {
+    var p = provider();
+    if (p !== L.prov) {
+      var keepCache = L.prov === null && p === TUYA;
+      L.prov = p; L.devs = keepCache ? L.devs : []; L.scenes = []; L.scAt = 0; L.last = 0; L.err = '';
+    }
+    if (!p) { renderLights(); return; }
+    if (L.loading) { return; }
+    if (!force && Date.now() - L.last < 30000) { renderLights(); return; }
+    L.loading = true; renderLights();
+    p.list(function (err, devs) {
+      L.loading = false; L.last = Date.now();
+      if (err) { L.err = String(err); }
+      else {
+        L.err = '';
+        each(devs, function (d) { var old = findBy(L.devs, 'key', d.key); if (old && old.pending) { d.ligado = old.ligado; d.pending = true; } });
+        L.devs = devs;
+        store.set('devcache', p === TUYA ? devs : []);
+        if (p === HA || Date.now() - L.scAt > 30 * 60 * 1000) {
+          p.scenes(function (e2, sc) { L.scAt = Date.now(); if (!e2) { L.scenes = sc; renderLights(); } });
+        }
+      }
+      renderLights();
+    });
+  }
+
+  function devIcon(d) {
+    if (XMAS_RE.test(d.nome)) { return '🎄'; }
+    if (d.tipo === 'luz') { return '💡'; }
+    if (d.tipo === 'tomada') { return '🔌'; }
+    return '🔘';
+  }
+  function ago(t) {
+    if (!t) { return ''; }
+    var m = Math.floor((Date.now() - t) / 60000);
+    return m < 1 ? 'agora' : 'há ' + m + ' min';
+  }
+
+  function renderLights() {
+    var p = L.prov || provider();
+    var grid = $('lgrid'), quick = $('lquick'), scenes = $('lscenes'), errb = $('lerr');
+    $('ledit').className = 'ghost small' + (p && L.devs.length ? '' : ' hidden');
+    $('ledit').textContent = L.editing ? 'Concluído' : 'Organizar';
+    $('lrefresh').className = 'ghost small icon' + (p ? '' : ' hidden');
+    $('lstatus').textContent = L.loading ? 'a atualizar…' : ago(L.last);
+    if (!p) {
+      quick.className = 'hidden'; scenes.className = 'hidden'; errb.className = 'errbox hidden';
+      grid.innerHTML = '<div class="setup"><div class="big">🎄💡</div><p>Ligue as luzes da Smart Life a este painel para as acender e apagar daqui, com cores de Natal e cenas.</p>' +
+        '<button type="button" class="red" data-setup="1">Ligar as luzes</button></div>';
+      return;
+    }
+    if (L.err) { errb.className = 'errbox'; errb.textContent = L.err; } else { errb.className = 'errbox hidden'; }
+    var vis = L.devs.filter(function (d) { return L.editing || !isHidden(d.key); });
+    var anyCor = false, anyLuz = false;
+    each(L.devs, function (d) { if (!isHidden(d.key) && d.online) { if (d.podeCor) { anyCor = true; } if (d.tipo === 'luz') { anyLuz = true; } } });
+    if (vis.length) {
+      quick.className = '';
+      quick.innerHTML = '<button type="button" class="green" data-q="on">Ligar tudo</button>' +
+        '<button type="button" data-q="off">Desligar tudo</button>' +
+        (anyCor || L.devs.some(function (d) { return XMAS_RE.test(d.nome); }) ? '<button type="button" class="red" data-q="natal">🎄 Modo Natal</button>' : '') +
+        (anyLuz ? '<button type="button" class="gold" data-q="quente">Branco quente</button>' : '');
+    } else { quick.className = 'hidden'; }
+    if (L.scenes.length && !L.editing) {
+      var sh = '';
+      each(L.scenes, function (s) { sh += '<button type="button" class="scene" data-sc="' + esc(s.key) + '">✨ ' + esc(s.nome) + '</button>'; });
+      scenes.innerHTML = sh; scenes.className = '';
+    } else { scenes.className = 'hidden'; }
+    if (!L.devs.length) {
+      grid.innerHTML = L.loading ? '<div class="empty">A procurar as suas luzes…</div>' :
+        (L.err ? '' : '<div class="empty">Não encontrei luzes nem tomadas. Confirme que a conta Smart Life está ligada.</div>');
+      return;
+    }
+    var h = '';
+    each(vis, function (d) {
+      var st;
+      if (!d.online) { st = 'Sem ligação'; }
+      else if (d.ligado) { st = (d.tipo === 'luz' ? 'Acesa' : 'Ligada') + (d.podeBrilho && d.brilho ? ' · ' + d.brilho + '%' : ''); }
+      else { st = d.tipo === 'luz' ? 'Apagada' : 'Desligada'; }
+      var cls = 'tile' + (d.ligado && d.online ? ' on' : '') + (d.online ? '' : ' offline') + (d.pending ? ' pending' : '') + (isHidden(d.key) ? ' hid' : '');
+      h += '<div class="' + cls + '" data-k="' + esc(d.key) + '"><div class="tin">' +
+        '<div class="ticon">' + devIcon(d) + '</div><div class="tname">' + esc(d.nome) + '</div><div class="tstate">' + st + '</div>' +
+        (L.editing ? '<button type="button" class="ghost thide" data-hide="1">' + (isHidden(d.key) ? 'Mostrar' : 'Ocultar') + '</button>' :
+          (d.podeBrilho && d.ligado && d.online ? '<input type="range" class="tbr" min="1" max="100" value="' + (d.brilho || 100) + '" aria-label="Brilho">' : '')) +
+        '</div></div>';
+    });
+    grid.innerHTML = h || '<div class="empty">Todos os equipamentos estão ocultos. Toque em Organizar.</div>';
+  }
+
+  function devByKey(k) { return findBy(L.devs, 'key', k); }
+  function runQueue(tasks, done) {
+    var i = 0, active = 0, errors = [];
+    function next() {
+      while (active < 2 && i < tasks.length) {
+        active++;
+        tasks[i++](function (err) { active--; if (err) { errors.push(err); } if (i >= tasks.length && active === 0) { done(errors); } else { next(); } });
+      }
+    }
+    if (!tasks.length) { done([]); } else { next(); }
+  }
+  function toggleDev(d) {
+    var p = L.prov;
+    if (!p) { return; }
+    if (!d.online) { toast(d.nome + ': sem ligação', true); return; }
+    var on = !d.ligado;
+    d.ligado = on; d.pending = true; renderLights();
+    p.setOn(d, on, function (err) {
+      d.pending = false;
+      if (err) { d.ligado = !on; toast(d.nome + ': ' + err, true); }
+      renderLights();
+    });
+  }
+  function setBright(d, pct) {
+    var p = L.prov;
+    if (!p) { return; }
+    var old = d.brilho;
+    d.brilho = pct; d.ligado = true; d.pending = true; renderLights();
+    p.setBright(d, pct, function (err) {
+      d.pending = false;
+      if (err) { d.brilho = old; toast(d.nome + ': ' + err, true); }
+      renderLights();
+    });
+  }
+  function allSet(on) {
+    var p = L.prov, tasks = [];
+    each(L.devs, function (d) {
+      if (isHidden(d.key) || !d.online || d.ligado === on) { return; }
+      d.ligado = on; d.pending = true;
+      tasks.push(function (cb) { p.setOn(d, on, function (err) { d.pending = false; if (err) { d.ligado = !on; } renderLights(); cb(err ? d.nome + ': ' + err : null); }); });
+    });
+    renderLights();
+    if (!tasks.length) { toast(on ? 'Já está tudo ligado' : 'Já está tudo desligado'); return; }
+    runQueue(tasks, function (errs) { if (errs.length) { toast(errs[0], true); } else { toast(on ? 'Tudo ligado' : 'Tudo desligado'); } });
+  }
+  var PALETTE = [{ h: 0, s: 100, v: 100 }, { h: 120, s: 100, v: 75 }, { h: 42, s: 85, v: 100 }, { h: 348, s: 95, v: 65 }];
+  function natal() {
+    var p = L.prov, tasks = [], n = 0;
+    each(L.devs, function (d) {
+      if (isHidden(d.key) || !d.online) { return; }
+      if (d.podeCor) {
+        var c = PALETTE[n++ % PALETTE.length];
+        d.ligado = true; d.pending = true;
+        tasks.push(function (cb) { p.setColor(d, c, function (err) { d.pending = false; renderLights(); cb(err ? d.nome + ': ' + err : null); }); });
+      } else if (XMAS_RE.test(d.nome) && !d.ligado) {
+        d.ligado = true; d.pending = true;
+        tasks.push(function (cb) { p.setOn(d, true, function (err) { d.pending = false; if (err) { d.ligado = false; } renderLights(); cb(err ? d.nome + ': ' + err : null); }); });
+      }
+    });
+    renderLights();
+    if (!tasks.length) { toast('Não há luzes de cor nem enfeites de Natal ligados à tomada'); return; }
+    runQueue(tasks, function (errs) { if (errs.length) { toast(errs[0], true); } else { toast('🎄 Modo Natal ativo'); } });
+  }
+  function quente() {
+    var p = L.prov, tasks = [];
+    each(L.devs, function (d) {
+      if (isHidden(d.key) || !d.online || d.tipo !== 'luz') { return; }
+      d.ligado = true; d.pending = true;
+      tasks.push(function (cb) {
+        var f = (d.podeBrilho || d.podeTemp || d.podeCor) ? p.setWarm : function (dv, c2) { p.setOn(dv, true, c2); };
+        f(d, function (err) { d.pending = false; if (!err && d.podeBrilho) { d.brilho = 100; } renderLights(); cb(err ? d.nome + ': ' + err : null); });
+      });
+    });
+    renderLights();
+    runQueue(tasks, function (errs) { if (errs.length) { toast(errs[0], true); } else { toast('Luz branca quente'); } });
+  }
+
+  $('lgrid').addEventListener('click', function (ev) {
+    if (closest(ev.target, 'data-setup', $('lgrid'))) { openCfg('sec-luzes'); return; }
+    if (ev.target.tagName === 'INPUT') { return; }
+    var tile = closest(ev.target, 'data-k', $('lgrid'));
+    if (!tile) { return; }
+    var d = devByKey(tile.getAttribute('data-k'));
+    if (!d) { return; }
+    if (L.editing) {
+      if (isHidden(d.key)) { hidden.splice(hidden.indexOf(d.key), 1); } else { hidden.push(d.key); }
+      store.set('ocultos', hidden);
+      renderLights();
+      return;
+    }
+    toggleDev(d);
+  });
+  $('lgrid').addEventListener('change', function (ev) {
+    if (ev.target.tagName !== 'INPUT') { return; }
+    var tile = closest(ev.target, 'data-k', $('lgrid'));
+    var d = tile && devByKey(tile.getAttribute('data-k'));
+    if (d) { setBright(d, Math.max(1, Math.min(100, parseInt(ev.target.value, 10) || 100))); }
+  });
+  $('lquick').addEventListener('click', function (ev) {
+    var b = closest(ev.target, 'data-q', $('lquick'));
+    if (!b || !L.prov) { return; }
+    var q = b.getAttribute('data-q');
+    if (q === 'on') { allSet(true); } else if (q === 'off') { allSet(false); } else if (q === 'natal') { natal(); } else if (q === 'quente') { quente(); }
+  });
+  $('lscenes').addEventListener('click', function (ev) {
+    var b = closest(ev.target, 'data-sc', $('lscenes'));
+    if (!b || !L.prov) { return; }
+    var sc = findBy(L.scenes, 'key', b.getAttribute('data-sc'));
+    if (!sc) { return; }
+    b.className = 'scene pressed';
+    L.prov.scene(sc, function (err) {
+      b.className = 'scene';
+      if (err) { toast(sc.nome + ': ' + err, true); }
+      else { toast('✨ ' + sc.nome); setTimeout(function () { loadLights(true); }, 4000); }
+    });
+  });
+  $('lrefresh').addEventListener('click', function () { loadLights(true); });
+  $('ledit').addEventListener('click', function () { L.editing = !L.editing; renderLights(); });
+
+  // ================= TV =================
+  var APPS = { 'com.netflix.ninja': 'Netflix', 'com.google.android.youtube.tv': 'YouTube', 'com.amazon.amazonvideo.livingroom': 'Prime Video', 'com.disney.disneyplus': 'Disney+' };
+  (function () {
+    var h = '';
+    each(['1', '2', '3', '4', '5', '6', '7', '8', '9', '', '0', ''], function (k) {
+      h += k ? '<button type="button" data-key="' + k + '">' + k + '</button>' : '<button type="button" style="visibility:hidden"></button>';
+    });
+    $('numpad').innerHTML = h;
+  })();
+  function tvEntity() {
+    if (cfg.tv) { return cfg.tv; }
+    var r = null;
+    each(L.ha || [], function (e) { if (!r && e.entity_id.indexOf('remote.') === 0) { r = e.entity_id; } });
+    return r;
+  }
+  function tvReady() { return !!(haBase() && trim(cfg.haToken)); }
+  function renderTV() {
+    var ok = tvReady(), ent = ok ? tvEntity() : null;
+    var setup = $('tvsetup');
+    if (!ok) {
+      setup.className = 'errbox';
+      setup.innerHTML = '📺 O comando fica ativo quando ligar o Home Assistant com a integração Android TV Remote. <button type="button" class="ghost small" data-tvsetup="1">Ver como</button>';
+      $('tvwrap').className = 'off'; $('tvstatus').textContent = '';
+      return;
+    }
+    if (!ent) {
+      setup.className = 'errbox';
+      setup.innerHTML = 'Ainda não encontrei a TV no Home Assistant. Adicione a integração Android TV Remote e escolha a TV nas definições. <button type="button" class="ghost small" data-tvsetup="1">Definições</button>';
+      $('tvwrap').className = 'off'; $('tvstatus').textContent = '';
+      return;
+    }
+    setup.className = 'errbox hidden';
+    $('tvwrap').className = '';
+    var st = null;
+    each(L.ha || [], function (e) { if (e.entity_id === ent) { st = e; } });
+    if (st) {
+      var act = st.attributes && st.attributes.current_activity;
+      $('tvstatus').textContent = st.state === 'on' ? 'Ligada' + (act ? ' · ' + (APPS[act] || act) : '') : (st.state === 'off' ? 'Desligada' : 'Sem ligação');
+    }
+  }
+  function refreshTV() {
+    if (!tvReady()) { renderTV(); return; }
+    HA.states(function () { renderTV(); fillTvSelect(); });
+  }
+  function tvSend(el) {
+    if (!tvReady() || !tvEntity()) { toast('Ligue primeiro o Home Assistant para usar o comando', true); return; }
+    var ent = tvEntity(), key = el.getAttribute('data-key'), app = el.getAttribute('data-app');
+    var base = el.className;
+    el.className = base + ' pressed';
+    setTimeout(function () { el.className = base; }, 160);
+    var cb = function (err) { if (err) { toast('TV: ' + err, true); } else if (app || key === 'POWER') { setTimeout(refreshTV, 2500); } };
+    if (app) { HA.svc('remote', 'turn_on', { entity_id: ent, activity: app }, cb); }
+    else { HA.svc('remote', 'send_command', { entity_id: ent, command: key }, cb); }
+  }
+  $('v-tv').addEventListener('click', function (ev) {
+    if (closest(ev.target, 'data-tvsetup', $('v-tv'))) { openCfg('sec-tv'); return; }
+    var el = closest(ev.target, 'data-key', $('v-tv')) || closest(ev.target, 'data-app', $('v-tv'));
+    if (el && el.style.visibility !== 'hidden') { tvSend(el); }
+  });
+
+  // ================= definições =================
+  var draftMode = cfg.luzes;
+  function setModeUI(m) {
+    draftMode = m;
+    each(document.querySelectorAll('#lmode button'), function (b) { b.className = b.getAttribute('data-m') === m ? 'on' : ''; });
+    $('f-tuya').className = m === 'tuya' ? '' : 'hidden';
+    $('f-ha').className = m === 'ha' ? '' : 'hidden';
+  }
+  function fillTvSelect() {
+    var sel = $('c-tv'), cur = cfg.tv, h = '<option value="">' + (L.ha ? 'Escolher automaticamente' : 'Escolher a TV (teste o Home Assistant primeiro)') + '</option>';
+    each(L.ha || [], function (e) {
+      if (e.entity_id.indexOf('remote.') === 0) {
+        h += '<option value="' + esc(e.entity_id) + '"' + (e.entity_id === cur ? ' selected' : '') + '>' + esc((e.attributes && e.attributes.friendly_name) || e.entity_id) + '</option>';
+      }
+    });
+    sel.innerHTML = h;
+  }
+  function openCfg(sec) {
+    $('c-ponte').value = cfg.ponte; $('c-chave').value = cfg.chave;
+    $('c-haurl').value = cfg.haUrl || (SERVED_BY_HA ? location.protocol + '//' + location.host : '');
+    $('c-hatoken').value = cfg.haToken;
+    $('c-gcal').value = store.get('gcal', '');
+    $('c-neve').checked = !!cfg.neve; $('c-grinalda').checked = !!cfg.grinalda;
+    $('c-local').textContent = 'Localidade atual: ' + cfg.local;
+    $('m-tuya').textContent = ''; $('m-ha').textContent = ''; $('geores').innerHTML = '';
+    setModeUI(cfg.luzes);
+    fillTvSelect();
+    $('modal').className = '';
+    if (sec && $(sec)) { try { $(sec).scrollIntoView(); } catch (e) {} }
+  }
+  function closeCfg() { $('modal').className = 'hidden'; }
+  function msg(id, text, ok) { var el = $(id); el.textContent = text; el.className = 'msg ' + (ok ? 'ok' : 'err'); }
+
+  $('cfgbtn').addEventListener('click', function () { openCfg(); });
+  $('cfgclose').addEventListener('click', closeCfg);
+  $('lmode').addEventListener('click', function (ev) {
+    var b = closest(ev.target, 'data-m', $('lmode'));
+    if (b) { setModeUI(b.getAttribute('data-m')); }
+  });
+  $('t-tuya').addEventListener('click', function () {
+    var keep = { ponte: cfg.ponte, chave: cfg.chave };
+    cfg.ponte = trim($('c-ponte').value); cfg.chave = trim($('c-chave').value);
+    if (!/^https:\/\//.test(cfg.ponte)) { msg('m-tuya', 'O endereço da ponte tem de começar por https://', false); cfg.ponte = keep.ponte; cfg.chave = keep.chave; return; }
+    msg('m-tuya', 'A testar…', true);
+    TUYA.list(function (err, devs) {
+      if (err) { msg('m-tuya', err, false); }
+      else { msg('m-tuya', 'Ligação feita: ' + devs.length + ' luzes/tomadas encontradas. Carregue em Guardar.', true); }
+      cfg.ponte = keep.ponte; cfg.chave = keep.chave;
+    });
+  });
+  $('t-ha').addEventListener('click', function () {
+    var keep = { haUrl: cfg.haUrl, haToken: cfg.haToken };
+    cfg.haUrl = trim($('c-haurl').value); cfg.haToken = trim($('c-hatoken').value);
+    msg('m-ha', 'A testar…', true);
+    HA.states(function (err, arr) {
+      if (err) { msg('m-ha', err, false); }
+      else {
+        var n = 0, r = 0;
+        each(arr, function (e) { if (/^(light|switch)\./.test(e.entity_id)) { n++; } if (e.entity_id.indexOf('remote.') === 0) { r++; } });
+        msg('m-ha', 'Ligação feita: ' + n + ' luzes/tomadas e ' + r + (r === 1 ? ' comando de TV' : ' comandos de TV') + '. Carregue em Guardar.', true);
+        fillTvSelect();
+      }
+      cfg.haUrl = keep.haUrl; cfg.haToken = keep.haToken;
+    });
+  });
+  $('t-geo').addEventListener('click', function () {
+    var q = trim($('c-geo').value);
+    if (!q) { return; }
+    $('geores').innerHTML = '<div class="hint">A procurar…</div>';
+    req('GET', 'https://geocoding-api.open-meteo.com/v1/search?count=5&language=pt&format=json&name=' + encodeURIComponent(q), {}, null, function (err, d) {
+      if (err || !d) { $('geores').innerHTML = '<div class="msg err">Não consegui procurar: ' + esc(err || 'sem resposta') + '</div>'; return; }
+      var h = '';
+      each(d.results || [], function (r) {
+        var label = r.name + (r.admin1 ? ', ' + r.admin1 : '') + (r.country ? ' (' + r.country + ')' : '');
+        h += '<button type="button" data-lat="' + r.latitude + '" data-lon="' + r.longitude + '" data-name="' + esc(r.name) + '">' + esc(label) + '</button>';
+      });
+      $('geores').innerHTML = h || '<div class="hint">Nenhuma localidade encontrada.</div>';
+    });
+  });
+  $('geores').addEventListener('click', function (ev) {
+    var b = closest(ev.target, 'data-lat', $('geores'));
+    if (!b) { return; }
+    cfg.lat = Math.round(parseFloat(b.getAttribute('data-lat')) * 1000) / 1000;
+    cfg.lon = Math.round(parseFloat(b.getAttribute('data-lon')) * 1000) / 1000;
+    cfg.local = b.getAttribute('data-name');
+    saveCfg();
+    $('c-local').textContent = 'Localidade atual: ' + cfg.local;
+    $('geores').innerHTML = '';
+    loadWx();
+  });
+  $('cfgsave').addEventListener('click', function () {
+    cfg.luzes = draftMode;
+    cfg.ponte = trim($('c-ponte').value); cfg.chave = trim($('c-chave').value);
+    cfg.haUrl = trim($('c-haurl').value); cfg.haToken = trim($('c-hatoken').value);
+    cfg.tv = $('c-tv').value;
+    cfg.neve = $('c-neve').checked; cfg.grinalda = $('c-grinalda').checked;
+    saveCfg();
+    var g = trim($('c-gcal').value);
+    if (g) { store.set('gcal', g); } else { store.del('gcal'); }
+    applyGcal(); applyDecor();
+    closeCfg();
+    L.prov = undefined;
+    loadLights(true);
+    renderTV();
+    toast('Definições guardadas');
+  });
+  var wipeTimer = null;
+  $('wipe').addEventListener('click', function () {
+    if (!wipeTimer) {
+      $('wipe').textContent = 'Toque outra vez para confirmar';
+      wipeTimer = setTimeout(function () { $('wipe').textContent = 'Apagar todos os dados deste painel'; wipeTimer = null; }, 4000);
+      return;
+    }
+    clearTimeout(wipeTimer); wipeTimer = null;
+    each(['events', 'shop', 'expenses', 'limit', 'gcal', 'wxcache', 'cfg', 'devcache', 'ocultos', 'tab'], function (k) { store.del(k); });
+    location.reload();
+  });
+
+  // ================= arranque e ciclos =================
+  document.addEventListener('touchstart', wake, true);
+  document.addEventListener('click', wake, true);
+  document.addEventListener('visibilitychange', function () {
+    snowUpdate();
+    if (!document.hidden) { loadWx(); if (curView === 'casa') { loadLights(false); } }
+  });
+  var resizeT = null;
+  window.addEventListener('resize', function () {
+    clearTimeout(resizeT);
+    resizeT = setTimeout(function () { snowSize(); snowInit(); if (cfg.grinalda) { buildGarland(); } }, 250);
+  });
+  // Estado das luzes: Smart Life de 5 em 5 min (quota gratuita), Home Assistant a cada minuto. Só de dia.
+  setInterval(function () {
+    var p = L.prov, h = new Date().getHours();
+    if (!p || document.hidden || h < 7 || h >= 23) { return; }
+    var every = p === HA ? 60000 : 5 * 60000;
+    if (Date.now() - L.last >= every - 1000) { loadLights(true); }
+    if (curView === 'tv' && p === HA) { renderTV(); }
+  }, 60000);
+
+  snowSize(); snowInit();
+  applyDecor();
+  applyGcal();
+  renderShop(); renderBud();
+  tick();
+  setInterval(tick, 1000);
+  showView(curView);
+  if (curView !== 'casa') { loadLights(true); }
+  renderTV();
+  if (tvReady()) { refreshTV(); }
+  loadWx();
+
+  window.painelDebug = { L: L, cfg: function () { return cfg; }, xmasText: xmasText };
+})();
+</script>
+</body>
+</html>
