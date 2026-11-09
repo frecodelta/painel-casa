@@ -177,16 +177,23 @@
   .chip { display: inline-block; font-size: 13px; background: rgba(0,0,0,.3); border: 1px solid rgba(243,215,124,.18); border-radius: 10px; padding: 5px 9px; margin: 0 6px 6px 0; }
 
   /* ---------- calendário ---------- */
-  #monthname { font-family: var(--serif); font-size: 19px; color: var(--cream); margin-bottom: 6px; }
   #grid { font-size: 0; }
-  .dow, .day { display: inline-block; width: 14.2857%; text-align: center; font-size: 16px; padding: 9px 0; position: relative; border-radius: 10px; }
-  .dow { color: var(--gold); font-size: 12px; padding: 4px 0; }
-  .day { cursor: pointer; }
-  .day.today { background: linear-gradient(180deg, #d9263e, #a30d24); color: #fff; font-weight: 700; box-shadow: inset 0 0 0 1px rgba(243,215,124,.7); }
-  .day.xmas { color: var(--gold-l); font-weight: 700; }
-  .day.has:after { content: ""; position: absolute; left: 50%; bottom: 3px; width: 5px; height: 5px; margin-left: -2.5px; border-radius: 50%; background: var(--gold-l); }
-  #gcal { height: 100%; min-height: 320px; }
-  #gcal iframe { width: 100%; height: 100%; border: 0; border-radius: 12px; background: #fff; }
+  .dow { display: inline-block; width: 14.2857%; text-align: center; font-size: 11px; letter-spacing: 1.5px; text-transform: uppercase; color: var(--gold); padding: 0 0 6px; }
+  .day { display: inline-block; vertical-align: top; width: 14.2857%; padding: 2px; font-size: 14px; cursor: pointer; }
+  .din { height: 66px; border-radius: 10px; padding: 4px 5px; background: rgba(255,246,232,.035); border: 1px solid rgba(243,215,124,.1); overflow: hidden; }
+  .day.out .din { opacity: .35; }
+  .dn { display: inline-block; min-width: 22px; height: 22px; line-height: 22px; text-align: center; border-radius: 11px; font-size: 13px; color: var(--muted); }
+  .day.today .dn { background: linear-gradient(180deg, #d9263e, #a30d24); color: #fff; font-weight: 700; }
+  .day.xmas .dn { color: var(--gold-l); font-weight: 700; }
+  .day.today.xmas .dn { color: #fff; }
+  .day.sel .din { border-color: var(--gold-l); box-shadow: inset 0 0 0 1px var(--gold-l); background: rgba(243,215,124,.08); }
+  .chipe { display: block; font-size: 11px; line-height: 16px; margin-top: 2px; padding: 0 5px; border-radius: 5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: var(--cream); background: rgba(201,161,46,.32); }
+  .chipe.g { background: rgba(36,128,79,.6); }
+  .chipe.more { background: transparent; color: var(--muted); padding: 0 2px; }
+  .calmsg { -webkit-flex: none; flex: none; font-size: 13px; line-height: 1.4; color: #ff9aa6; margin-top: 6px; }
+  .item.ev .bar { -webkit-flex: none; flex: none; width: 4px; height: 30px; border-radius: 2px; background: var(--gold); margin-right: 10px; }
+  .item.ev.g .bar { background: #39d98a; }
+  .item.ev .txt small { display: block; }
 
   /* ---------- TV ---------- */
   #v-tv .card { -webkit-align-items: stretch; align-items: stretch; }
@@ -230,6 +237,11 @@
   label.chkrow { display: -webkit-flex; display: flex; -webkit-align-items: center; align-items: center; padding: 8px 0; font-size: 16px; }
   label.chkrow input { width: 24px; height: 24px; min-height: 0; margin: 0 10px 0 0; -webkit-appearance: checkbox; appearance: checkbox; }
   #geores button { display: block; width: 100%; text-align: left; margin-top: 6px; }
+  .row > input.num { -webkit-flex: none; flex: none; width: 92px; }
+  .lab { -webkit-flex: none; flex: none; font-size: 15px; color: var(--muted); }
+  .unit { -webkit-flex: none; flex: none; font-size: 15px; color: var(--muted); }
+  #qr { display: inline-block; background: #fff; padding: 10px; border-radius: 14px; margin-top: 10px; }
+  #qr svg { display: block; width: 280px; height: 280px; }
 
   #toast { position: fixed; left: 50%; bottom: 96px; z-index: 30; -webkit-transform: translateX(-50%); transform: translateX(-50%); max-width: 80%; background: rgba(15,59,39,.96); border: 1px solid var(--gold); color: var(--cream); padding: 12px 18px; border-radius: 14px; font-size: 15px; box-shadow: 0 10px 30px rgba(0,0,0,.5); }
   #toast.err { background: rgba(120,10,28,.97); }
@@ -303,16 +315,14 @@
     <section class="view" id="v-agenda">
       <div class="card wide">
         <div class="chead">
-          <h2>Calendário</h2>
-          <div class="tools" id="calnav"><button type="button" class="small icon" id="prevm">‹</button> <button type="button" class="small" id="todaym">hoje</button> <button type="button" class="small icon" id="nextm">›</button></div>
+          <h2 id="monthname">Calendário</h2>
+          <div class="tools" id="calnav"><button type="button" class="small icon" id="prevm" aria-label="Mês anterior">‹</button> <button type="button" class="small" id="todaym">hoje</button> <button type="button" class="small icon" id="nextm" aria-label="Mês seguinte">›</button></div>
         </div>
-        <div class="cbody">
-          <div id="gcal" class="hidden"></div>
-          <div id="localcal"><div id="monthname"></div><div id="grid"></div></div>
-        </div>
+        <div class="cbody"><div id="grid"></div></div>
+        <div class="calmsg hidden" id="calmsg"></div>
       </div>
       <div class="card">
-        <div class="chead"><h2>Eventos</h2><button type="button" class="red small" id="evtoggle">+ Novo</button></div>
+        <div class="chead"><h2 id="evtitle">Próximos</h2><div class="tools"><button type="button" class="ghost small hidden" id="evall">Ver próximos</button> <button type="button" class="red small" id="evtoggle">+ Novo</button></div></div>
         <div class="cbody">
           <form id="evform" class="hidden" autocomplete="off">
             <div class="row" style="margin-top:0"><input type="date" id="evdate"><input type="time" id="evtime" style="max-width:130px"></div>
@@ -423,6 +433,41 @@
   <div class="sheet">
     <div class="chead" style="margin:0"><h2>Definições</h2><button type="button" class="ghost" id="cfgclose">Fechar</button></div>
 
+    <div class="sec" id="sec-ipad">
+      <h3>Passar para o iPad</h3>
+      <p class="hint">As definições ficam guardadas em cada aparelho. Configure tudo aqui e passe-as para o iPad com um código.</p>
+      <button type="button" class="green" id="t-qr">Mostrar código para o iPad</button>
+      <div id="qrbox" class="hidden">
+        <div id="qr"></div>
+        <p class="hint">No iPad, abra a <b>Câmara</b>, aponte para o código e toque na ligação. O painel abre no Safari já configurado. Se usa o ícone do ecrã principal, apague o antigo e volte a fazer <b>Partilhar → Adicionar ao Ecrã Principal</b> a partir dessa página.</p>
+        <div class="row"><input type="text" id="qrlink" readonly><button type="button" id="t-copy">Copiar</button></div>
+        <p class="hint">O código inclui a chave da ponte. Não o partilhe com mais ninguém.</p>
+      </div>
+      <div class="row"><input type="text" id="c-import" placeholder="Ou cole aqui um link de definições" autocapitalize="none" autocorrect="off" spellcheck="false"><button type="button" id="t-import">Importar</button></div>
+      <div class="msg" id="m-import"></div>
+    </div>
+
+    <div class="sec" id="sec-ponte">
+      <h3>Ponte (Cloudflare)</h3>
+      <p class="hint">Liga o painel às luzes da Smart Life e ao Google Calendar.</p>
+      <div class="row"><input type="url" id="c-ponte" placeholder="Endereço da ponte (https://….workers.dev)" autocapitalize="none" autocorrect="off" spellcheck="false"></div>
+      <div class="row"><input type="password" id="c-chave" placeholder="Chave da ponte" autocapitalize="none" autocorrect="off"><button type="button" class="green" id="t-ponte">Testar</button></div>
+      <div class="msg" id="m-ponte"></div>
+      <details>
+        <summary>Como criar a ponte (cerca de 20 minutos, num computador)</summary>
+        <ol>
+          <li>Em <b>iot.tuya.com</b> crie uma conta (grátis). Vá a <b>Cloud → Development → Create Cloud Project</b>: Development Method <b>Smart Home</b>, Data Center <b>Central Europe</b>.</li>
+          <li>No projeto, abra <b>Devices → Link App Account → Add App Account</b> e leia o código QR com a app Smart Life (separador <b>Eu</b>, ícone de leitura no canto). As suas luzes aparecem na lista.</li>
+          <li>Em <b>Overview</b>, copie o <b>Access ID</b> e o <b>Access Secret</b>.</li>
+          <li>Em <b>dash.cloudflare.com</b> (conta grátis): <b>Workers &amp; Pages → Create → Worker</b>, dê o nome <code>luzes-casa</code> e carregue em <b>Deploy</b>. Depois <b>Edit code</b>: apague tudo, cole o conteúdo do ficheiro <code>ponte-luzes.js</code> e carregue em <b>Deploy</b>.</li>
+          <li>No Worker, em <b>Settings → Variables and Secrets</b>, crie: <code>TUYA_ACCESS_ID</code>, <code>TUYA_ACCESS_SECRET</code> (tipo Secret) e <code>PAINEL_CHAVE</code> (tipo Secret, uma palavra-passe inventada por si).</li>
+          <li>Aqui, cole o endereço do Worker (aparece como <code>https://luzes-casa.….workers.dev</code>) e a chave, e carregue em <b>Testar</b>.</li>
+        </ol>
+        <p class="hint"><b>Atualizar a ponte:</b> no Cloudflare abra o Worker → <b>Edit code</b>, apague tudo, cole o <code>ponte-luzes.js</code> novo e carregue em <b>Deploy</b>. As variáveis mantêm-se.</p>
+        <p class="hint">A Tuya dá o serviço grátis por períodos de até 6 meses. Quando expirar, o painel avisa; renova-se em <b>Cloud → Cloud Services → IoT Core → Extend Trial Period</b>. Para poupar a quota gratuita, o painel só atualiza o estado das luzes de 5 em 5 minutos (e quando toca no ⟳).</p>
+      </details>
+    </div>
+
     <div class="sec" id="sec-luzes">
       <h3>Luzes</h3>
       <div class="seg" id="lmode">
@@ -430,28 +475,36 @@
         <button type="button" data-m="tuya">Smart Life</button>
         <button type="button" data-m="ha">Home Assistant</button>
       </div>
-      <div id="f-tuya">
-        <div class="row"><input type="url" id="c-ponte" placeholder="Endereço da ponte (https://….workers.dev)" autocapitalize="none" autocorrect="off" spellcheck="false"></div>
-        <div class="row"><input type="password" id="c-chave" placeholder="Chave da ponte" autocapitalize="none" autocorrect="off"><button type="button" class="green" id="t-tuya">Testar</button></div>
-        <div class="msg" id="m-tuya"></div>
-        <details>
-          <summary>Como ligar a Smart Life (cerca de 20 minutos, num computador)</summary>
-          <ol>
-            <li>Em <b>iot.tuya.com</b> crie uma conta (grátis). Vá a <b>Cloud → Development → Create Cloud Project</b>: Development Method <b>Smart Home</b>, Data Center <b>Central Europe</b>.</li>
-            <li>No projeto, abra <b>Devices → Link App Account → Add App Account</b> e leia o código QR com a app Smart Life (separador <b>Eu</b>, ícone de leitura no canto). As suas luzes aparecem na lista.</li>
-            <li>Em <b>Overview</b>, copie o <b>Access ID</b> e o <b>Access Secret</b>.</li>
-            <li>Em <b>dash.cloudflare.com</b> (conta grátis): <b>Workers &amp; Pages → Create → Worker</b>, dê o nome <code>luzes-casa</code> e carregue em <b>Deploy</b>. Depois <b>Edit code</b>: apague tudo, cole o conteúdo do ficheiro <code>ponte-luzes.js</code> e carregue em <b>Deploy</b>.</li>
-            <li>No Worker, em <b>Settings → Variables and Secrets</b>, crie: <code>TUYA_ACCESS_ID</code>, <code>TUYA_ACCESS_SECRET</code> (tipo Secret) e <code>PAINEL_CHAVE</code> (tipo Secret, uma palavra-passe inventada por si).</li>
-            <li>Aqui, escolha <b>Smart Life</b>, cole o endereço do Worker (aparece como <code>https://luzes-casa.….workers.dev</code>) e a chave, e carregue em <b>Testar</b>.</li>
-          </ol>
-          <p class="hint">A Tuya dá o serviço grátis por períodos de até 6 meses. Quando expirar, o painel avisa; renova-se em <b>Cloud → Cloud Services → IoT Core → Extend Trial Period</b>. Para poupar a quota gratuita, o painel só atualiza o estado das luzes de 5 em 5 minutos (e quando toca no ⟳).</p>
-        </details>
-      </div>
       <div id="f-ha">
         <div class="row"><input type="url" id="c-haurl" placeholder="Endereço (ex.: http://homeassistant.local:8123)" autocapitalize="none" autocorrect="off" spellcheck="false"></div>
         <div class="row"><input type="password" id="c-hatoken" placeholder="Token de acesso de longa duração" autocapitalize="none" autocorrect="off"><button type="button" class="green" id="t-ha">Testar</button></div>
         <div class="msg" id="m-ha"></div>
       </div>
+      <h3 style="margin-top:16px">🎄 Modo Natal</h3>
+      <div class="row"><span class="lab">Intensidade</span><input type="number" class="num" id="c-natal" min="1" max="100" inputmode="numeric"><span class="unit">%</span></div>
+      <p class="hint">Vermelho escuro, verde-pinheiro, âmbar e bordeaux nas luzes de cor. Liga também as tomadas com nomes de Natal (árvore, presépio, estrela…).</p>
+      <h3 style="margin-top:16px">🕯️ Cozy</h3>
+      <div class="row"><input type="text" id="c-cozy" placeholder="Equipamentos, separados por vírgulas" autocapitalize="none" autocorrect="off" spellcheck="false"></div>
+      <div class="row"><span class="lab">Intensidade</span><input type="number" class="num" id="c-cozypct" min="1" max="100" inputmode="numeric"><span class="unit">%</span><span class="lab" style="margin-left:10px">Cor</span><input type="number" class="num" id="c-cozyk" min="1500" max="6500" step="100" inputmode="numeric"><span class="unit">K</span></div>
+      <label class="chkrow"><input type="checkbox" id="c-cozyoff"> Apagar as outras luzes</label>
+      <div class="hint" id="m-cozy"></div>
+      <p class="hint">2200 K é luz muito quente; se a lâmpada não descer tanto, fica na cor mais quente que permitir. As tomadas só ligam.</p>
+    </div>
+
+    <div class="sec" id="sec-cal">
+      <h3>Google Calendar</h3>
+      <div class="row"><input type="text" id="c-cal" placeholder="Endereço secreto no formato iCal" autocapitalize="none" autocorrect="off" spellcheck="false"><button type="button" class="green" id="t-cal">Testar</button></div>
+      <div class="msg" id="m-cal"></div>
+      <details>
+        <summary>Onde encontrar o endereço</summary>
+        <ol>
+          <li>No computador, abra <b>calendar.google.com</b> → ⚙ → <b>Definições</b>.</li>
+          <li>À esquerda, em <b>Definições dos meus calendários</b>, escolha o calendário.</li>
+          <li>Em <b>Integrar calendário</b>, copie o <b>Endereço secreto no formato iCal</b> (termina em <code>basic.ics</code>).</li>
+          <li>Cole aqui e carregue em <b>Testar</b>. Para juntar vários calendários, separe os endereços com espaços.</li>
+        </ol>
+        <p class="hint">Os eventos do Google aparecem a verde e atualizam de 15 em 15 minutos; só se podem ver. Os que criar no painel aparecem a dourado e ficam neste aparelho. Precisa da ponte na versão 2.</p>
+      </details>
     </div>
 
     <div class="sec" id="sec-tv">
@@ -466,7 +519,7 @@
           <li>Opcional: adicione também a integração <b>Tuya</b> (entra com o código QR da Smart Life, sem conta de programador). Assim as luzes também passam pelo Home Assistant, sem quotas.</li>
           <li>No seu perfil do Home Assistant → <b>Segurança → Tokens de acesso de longa duração → Criar token</b>.</li>
           <li>Copie o <code>index.html</code> deste painel para a pasta <code>/config/www/painel/</code> do Home Assistant e abra no iPad <code>http://homeassistant.local:8123/local/painel/index.html</code>. Servido pelo Home Assistant, o iPad não bloqueia a ligação.</li>
-          <li>Aqui, cole o token em <b>Luzes → Home Assistant</b>, carregue em <b>Testar</b> e escolha a TV acima.</li>
+          <li>Aqui, em <b>Luzes → Home Assistant</b>, cole o token, carregue em <b>Testar</b> e escolha a TV acima.</li>
         </ol>
         <p class="hint">Se abrir o painel pelo endereço do GitHub (https), o Safari bloqueia ligações a um Home Assistant em http. Nesse caso precisa de acesso https ao Home Assistant e de autorizar este endereço em <code>http: cors_allowed_origins</code>.</p>
       </details>
@@ -477,11 +530,6 @@
       <div class="hint" id="c-local"></div>
       <div class="row"><input type="text" id="c-geo" placeholder="Procurar localidade" autocapitalize="words"><button type="button" class="green" id="t-geo">Procurar</button></div>
       <div id="geores"></div>
-    </div>
-
-    <div class="sec">
-      <h3>Google Calendar</h3>
-      <div class="row"><input type="text" id="c-gcal" placeholder="ID do calendário (opcional, tem de ser público)" autocapitalize="none" autocorrect="off"></div>
     </div>
 
     <div class="sec">
@@ -595,7 +643,10 @@
   }
 
   // ================= configuração =================
-  var DEF = { local: 'Póvoa de Santa Iria', lat: 38.857, lon: -9.06, luzes: 'nenhuma', ponte: '', chave: '', haUrl: '', haToken: '', tv: '', neve: true, grinalda: true };
+  var DEF = {
+    local: 'Póvoa de Santa Iria', lat: 38.857, lon: -9.06, luzes: 'nenhuma', ponte: '', chave: '', haUrl: '', haToken: '', tv: '',
+    cal: '', natalPct: 20, cozyNomes: 'tomada sala, pe1, pe2', cozyPct: 20, cozyK: 2200, cozyApaga: false, neve: true, grinalda: true
+  };
   function loadCfg() {
     var c = store.get('cfg', {}) || {}, o = {};
     for (var k in DEF) { if (DEF.hasOwnProperty(k)) { o[k] = c.hasOwnProperty(k) ? c[k] : DEF[k]; } }
@@ -603,6 +654,36 @@
   }
   var cfg = loadCfg();
   function saveCfg() { store.set('cfg', cfg); }
+  (function () { // calendário antigo (embutido) → endereço novo
+    var old = store.get('gcal', '');
+    if (old) { if (!cfg.cal) { cfg.cal = old; saveCfg(); } store.del('gcal'); }
+  })();
+
+  // ---- passar definições entre aparelhos (#cfg=…) ----
+  function b64e(str) { return btoa(unescape(encodeURIComponent(str))).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, ''); }
+  function b64d(t) { t = t.replace(/-/g, '+').replace(/_/g, '/'); while (t.length % 4) { t += '='; } return decodeURIComponent(escape(atob(t))); }
+  function exportLink() {
+    var c = {};
+    for (var k in DEF) { if (DEF.hasOwnProperty(k) && cfg[k] !== DEF[k]) { c[k] = cfg[k]; } }
+    var pkg = { v: 1, s: Date.now(), c: c, o: store.get('ocultos', []) };
+    return location.protocol + '//' + location.host + location.pathname + '#cfg=' + b64e(JSON.stringify(pkg));
+  }
+  function importPkg(text, force) {
+    var m = /cfg=([A-Za-z0-9_\-]+)/.exec(String(text || ''));
+    if (!m) { return 'Não encontrei definições neste link.'; }
+    var pkg;
+    try { pkg = JSON.parse(b64d(m[1])); } catch (e) { return 'O link está incompleto ou estragado.'; }
+    if (!pkg || pkg.v !== 1 || typeof pkg.c !== 'object') { return 'Formato de definições desconhecido.'; }
+    if (!force && pkg.s <= store.get('importStamp', 0)) { return 'antigo'; }
+    for (var k in DEF) {
+      if (DEF.hasOwnProperty(k)) { cfg[k] = (pkg.c.hasOwnProperty(k) && typeof pkg.c[k] === typeof DEF[k]) ? pkg.c[k] : DEF[k]; }
+    }
+    saveCfg();
+    if (pkg.o && pkg.o.length !== undefined) { store.set('ocultos', pkg.o); }
+    store.set('importStamp', pkg.s || Date.now());
+    return 'ok';
+  }
+  var IMPORTED = /cfg=/.test(location.hash || '') && importPkg(location.hash, false) === 'ok';
 
   // Configuração por endereço: ?ponte=…&chave=…  ou  ?ha=…&token=…
   (function () {
@@ -812,6 +893,7 @@
     store.set('tab', v);
     if (v === 'casa') { loadLights(false); }
     if (v === 'tv') { refreshTV(); }
+    if (v === 'agenda') { calRefresh(false); }
   }
   $('tabs').addEventListener('click', function (ev) {
     var b = closest(ev.target, 'data-v', $('tabs'));
@@ -821,6 +903,8 @@
   // ================= agenda =================
   var now0 = new Date();
   var view = { y: now0.getFullYear(), m: now0.getMonth() };
+  var G = { cache: {}, err: '', loading: {}, sel: null };
+  function isoToDate(k) { var p = k.split('-'); return new Date(+p[0], +p[1] - 1, +p[2]); }
   function pruneEvents() {
     var evs = store.get('events', []);
     var lim = new Date(); lim.setDate(lim.getDate() - 14);
@@ -828,65 +912,164 @@
     var keep = evs.filter(function (e) { return e.d >= k; });
     if (keep.length !== evs.length) { store.set('events', keep); }
   }
+  // ---- Google Calendar através da ponte ----
+  function bridgeReady() { return !!(trim(cfg.ponte) && trim(cfg.chave)); }
+  function calSources() { return trim(cfg.cal || '').split(/[\s,]+/).filter(function (x) { return !!x; }); }
+  function normG(e) {
+    var o = { key: 'g:' + e.id, src: 'g', titulo: e.t || '(sem título)', local: e.local || '', dia: !!e.dia };
+    if (o.dia) {
+      o.d0 = e.ini;
+      var f = isoToDate(e.fim); f.setDate(f.getDate() - 1);
+      o.d1 = iso(f) < o.d0 ? o.d0 : iso(f);
+      o.hora = ''; o.fimTs = isoToDate(e.fim).getTime();
+    } else {
+      var st = new Date(e.ini), fi = new Date(e.fim);
+      o.d0 = iso(st);
+      o.d1 = fi > st ? iso(new Date(fi.getTime() - 1)) : o.d0;
+      o.hora = pad(st.getHours()) + ':' + pad(st.getMinutes());
+      o.fimTs = Math.max(fi.getTime(), st.getTime());
+    }
+    return o;
+  }
+  function calFetch(de, ate, force) {
+    if (!bridgeReady()) { return; }
+    var k = de + '|' + ate, c = G.cache[k];
+    if (G.loading[k] || (!force && c && Date.now() - c.t < 15 * 60000)) { return; }
+    G.loading[k] = true;
+    TUYA.call({ acao: 'calendario', fontes: calSources(), de: de, ate: ate }, function (err, d) {
+      G.loading[k] = false;
+      if (err) {
+        if (!calSources().length) { G.err = ''; }
+        else { G.err = /desconhecida/i.test(err) ? 'para ver os eventos, atualize a ponte (ponte-luzes.js, versão 2).' : String(err); }
+        G.cache[k] = { t: Date.now() - 10 * 60000, evs: c ? c.evs : [] };
+      } else {
+        G.err = (d.erros && d.erros.length) ? d.erros.join(' ') : '';
+        var evs = [];
+        each(d.eventos || [], function (e) { evs.push(normG(e)); });
+        G.cache[k] = { t: Date.now(), evs: evs };
+      }
+      renderCal(); renderEvents();
+    });
+  }
+  function gridStart(y, m) { var first = new Date(y, m, 1); return new Date(y, m, 1 - ((first.getDay() + 6) % 7)); }
+  function calRefresh(force) {
+    var t = new Date(), e = new Date(); e.setDate(t.getDate() + 60);
+    var up = [iso(t), iso(e)];
+    var gs = gridStart(view.y, view.m), ge = new Date(gs.getFullYear(), gs.getMonth(), gs.getDate() + 41);
+    calFetch(up[0], up[1], force);
+    if (iso(gs) < up[0] || iso(ge) > up[1]) { calFetch(iso(gs), iso(ge), force); }
+  }
+  function allEvs() {
+    var out = [], seen = {};
+    each(store.get('events', []), function (e) {
+      out.push({ key: 'l:' + e.id, id: e.id, src: 'l', titulo: e.x, local: '', dia: !e.t, hora: e.t || '', d0: e.d, d1: e.d });
+    });
+    for (var k in G.cache) {
+      if (G.cache.hasOwnProperty(k)) { each(G.cache[k].evs, function (e) { if (!seen[e.key]) { seen[e.key] = true; out.push(e); } }); }
+    }
+    return out;
+  }
+  function evSort(a, b) {
+    var ka = (a.dia ? '0' : '1') + a.hora, kb = (b.dia ? '0' : '1') + b.hora;
+    return ka < kb ? -1 : (ka > kb ? 1 : (a.titulo < b.titulo ? -1 : 1));
+  }
+  function eventsOn(day, list) {
+    return (list || allEvs()).filter(function (e) { return e.d0 <= day && e.d1 >= day; }).sort(evSort);
+  }
+  function upcomingAll(max) {
+    var t = iso(new Date()), now = Date.now();
+    var list = allEvs().filter(function (e) {
+      if (e.d1 < t) { return false; }
+      if (!e.dia && e.d0 === t && e.d1 === t) {
+        if (e.src === 'g') { return e.fimTs > now; }
+        var p = e.hora.split(':'), st = new Date(); st.setHours(+p[0], +p[1], 0, 0);
+        return st.getTime() > now - 3600000;
+      }
+      return true;
+    });
+    each(list, function (e) { e.dShow = e.d0 < t ? t : e.d0; });
+    list.sort(function (a, b) { return a.dShow < b.dShow ? -1 : (a.dShow > b.dShow ? 1 : evSort(a, b)); });
+    return list.slice(0, max);
+  }
   function renderCal() {
-    var y = view.y, m = view.m;
+    var y = view.y, m = view.m, list = allEvs();
     $('monthname').textContent = cap(MESES[m]) + ' ' + y;
-    var startDow = (new Date(y, m, 1).getDay() + 6) % 7;
+    var first = new Date(y, m, 1), lead = (first.getDay() + 6) % 7;
     var dim = new Date(y, m + 1, 0).getDate();
-    var by = {};
-    each(store.get('events', []), function (e) { by[e.d] = true; });
-    var todayIso = iso(new Date());
-    var h = '', i, d;
-    each(['S', 'T', 'Q', 'Q', 'S', 'S', 'D'], function (l) { h += '<div class="dow">' + l + '</div>'; });
-    for (i = 0; i < startDow; i++) { h += '<div class="dow"></div>'; }
-    for (d = 1; d <= dim; d++) {
-      var k = y + '-' + pad(m + 1) + '-' + pad(d);
-      var cls = 'day' + (k === todayIso ? ' today' : '') + (by[k] ? ' has' : '') + (m === 11 && (d === 24 || d === 25) ? ' xmas' : '');
-      h += '<div class="' + cls + '" data-d="' + k + '">' + d + '</div>';
+    var cells = lead + dim > 35 ? 42 : 35;
+    var todayIso = iso(new Date()), h = '', i;
+    each(['Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb', 'Dom'], function (l) { h += '<div class="dow">' + l + '</div>'; });
+    for (i = 0; i < cells; i++) {
+      var d = new Date(y, m, 1 - lead + i), k = iso(d), evs = eventsOn(k, list);
+      var cls = 'day' + (d.getMonth() !== m ? ' out' : '') + (k === todayIso ? ' today' : '') + (k === G.sel ? ' sel' : '') +
+        (d.getMonth() === 11 && (d.getDate() === 24 || d.getDate() === 25) ? ' xmas' : '');
+      var maxc = evs.length > 2 ? 1 : 2, chips = '';
+      each(evs.slice(0, maxc), function (e) {
+        chips += '<span class="chipe' + (e.src === 'g' ? ' g' : '') + '">' + esc(e.titulo) + '</span>';
+      });
+      if (evs.length > maxc) { chips += '<span class="chipe more">+' + (evs.length - maxc) + ' eventos</span>'; }
+      h += '<div class="' + cls + '" data-d="' + k + '"><div class="din"><span class="dn">' + d.getDate() + '</span>' + chips + '</div></div>';
     }
     $('grid').innerHTML = h;
+    var msg = $('calmsg');
+    if (G.err) { msg.className = 'calmsg'; msg.textContent = 'Google Calendar: ' + G.err; } else { msg.className = 'calmsg hidden'; }
   }
   function dayLabel(k) {
-    var p = k.split('-');
-    var d = new Date(+p[0], +p[1] - 1, +p[2]);
+    var d = isoToDate(k);
     var diff = daysBetween(new Date(), d);
     if (diff === 0) { return 'Hoje'; }
     if (diff === 1) { return 'Amanhã'; }
     return DIAS3[d.getDay()] + ' ' + d.getDate() + ' ' + MES3[d.getMonth()];
   }
-  function upcoming(max) {
-    var todayIso = iso(new Date());
-    return store.get('events', []).filter(function (e) { return e.d >= todayIso; }).sort(function (a, b) {
-      var ka = a.d + (a.t || '00:00'), kb = b.d + (b.t || '00:00');
-      return ka < kb ? -1 : (ka > kb ? 1 : 0);
-    }).slice(0, max);
-  }
-  function evItem(e, del) {
-    return '<li class="item" data-id="' + e.id + '"><span class="when">' + dayLabel(e.d) + (e.t ? ' · ' + esc(e.t) : '') + '</span>' +
-      '<span class="txt">' + esc(e.x) + '</span>' + (del ? '<button type="button" class="del" data-del="1" aria-label="Apagar">×</button>' : '') + '</li>';
+  function evRow(e, showDay, del) {
+    var when = (showDay ? dayLabel(e.dShow || e.d0) + ' · ' : '') + (e.dia ? 'todo o dia' : esc(e.hora));
+    return '<li class="item ev' + (e.src === 'g' ? ' g' : '') + '"' + (e.src === 'l' ? ' data-id="' + e.id + '"' : '') + '><span class="bar"></span>' +
+      '<span class="when">' + when + '</span><span class="txt">' + esc(e.titulo) + (e.local ? '<small>' + esc(e.local) + '</small>' : '') + '</span>' +
+      (del && e.src === 'l' ? '<button type="button" class="del" data-del="1" aria-label="Apagar">×</button>' : '') + '</li>';
   }
   function renderEvents() {
-    var up = upcoming(30), h = '';
-    each(up, function (e) { h += evItem(e, true); });
-    $('evlist').innerHTML = h || '<li class="empty">Sem eventos marcados.</li>';
+    var h = '';
+    if (G.sel) {
+      var sd = isoToDate(G.sel);
+      $('evtitle').textContent = DIAS3[sd.getDay()] + ', ' + sd.getDate() + ' ' + MES3[sd.getMonth()];
+      $('evall').className = 'ghost small';
+      each(eventsOn(G.sel), function (e) { h += evRow(e, false, true); });
+      h = h || '<li class="empty">Nada marcado neste dia.</li>';
+    } else {
+      $('evtitle').textContent = 'Próximos';
+      $('evall').className = 'ghost small hidden';
+      each(upcomingAll(30), function (e) { h += evRow(e, true, true); });
+      h = h || '<li class="empty">Sem eventos marcados.</li>';
+    }
+    $('evlist').innerHTML = h;
     var mini = '';
-    each(upcoming(4), function (e) { mini += evItem(e, false); });
-    $('miniev').innerHTML = mini || '<li class="empty">Nada marcado. Toque num dia da Agenda para marcar.</li>';
+    each(upcomingAll(4), function (e) { mini += evRow(e, true, false); });
+    $('miniev').innerHTML = mini || '<li class="empty">Nada marcado.</li>';
   }
   function showEvForm(dateIso) {
     $('evform').className = '';
-    $('evdate').value = dateIso || iso(new Date());
+    $('evdate').value = dateIso || G.sel || iso(new Date());
     if (curView !== 'agenda') { showView('agenda'); }
     try { $('evtext').focus(); } catch (e) {}
   }
   function hideEvForm() { $('evform').className = 'hidden'; }
-  $('prevm').addEventListener('click', function () { view.m--; if (view.m < 0) { view.m = 11; view.y--; } renderCal(); });
-  $('nextm').addEventListener('click', function () { view.m++; if (view.m > 11) { view.m = 0; view.y++; } renderCal(); });
-  $('todaym').addEventListener('click', function () { var n = new Date(); view = { y: n.getFullYear(), m: n.getMonth() }; renderCal(); });
+  function moveMonth(n) {
+    view.m += n;
+    if (view.m < 0) { view.m = 11; view.y--; }
+    if (view.m > 11) { view.m = 0; view.y++; }
+    renderCal(); calRefresh(false);
+  }
+  $('prevm').addEventListener('click', function () { moveMonth(-1); });
+  $('nextm').addEventListener('click', function () { moveMonth(1); });
+  $('todaym').addEventListener('click', function () { var n = new Date(); view = { y: n.getFullYear(), m: n.getMonth() }; G.sel = null; renderCal(); renderEvents(); });
   $('grid').addEventListener('click', function (ev) {
     var el = closest(ev.target, 'data-d', $('grid'));
-    if (el) { showEvForm(el.getAttribute('data-d')); }
+    if (!el) { return; }
+    var k = el.getAttribute('data-d');
+    G.sel = G.sel === k ? null : k;
+    hideEvForm(); renderCal(); renderEvents();
   });
+  $('evall').addEventListener('click', function () { G.sel = null; renderCal(); renderEvents(); });
   $('evtoggle').addEventListener('click', function () { if ($('evform').className === 'hidden') { showEvForm(); } else { hideEvForm(); } });
   $('evcancel').addEventListener('click', hideEvForm);
   $('evform').addEventListener('submit', function (ev) {
@@ -910,21 +1093,6 @@
   });
   $('miniev').addEventListener('click', function () { showView('agenda'); });
   $('minibud').addEventListener('click', function () { showView('orc'); });
-  function applyGcal() {
-    var id = store.get('gcal', '');
-    if (id) {
-      $('gcal').className = '';
-      $('localcal').className = 'hidden';
-      $('calnav').className = 'tools hidden';
-      $('gcal').innerHTML = '<iframe src="https://calendar.google.com/calendar/embed?src=' + encodeURIComponent(id) +
-        '&ctz=Europe%2FLisbon&hl=pt_PT&mode=AGENDA&showTitle=0&showNav=0&showPrint=0&showTabs=0&showCalendars=0&showTz=0" title="Google Calendar"></iframe>';
-    } else {
-      $('gcal').className = 'hidden';
-      $('gcal').innerHTML = '';
-      $('localcal').className = '';
-      $('calnav').className = 'tools';
-    }
-  }
 
   // ================= compras =================
   function shopItem(i, del) {
@@ -1065,7 +1233,7 @@
         var out = [];
         each(d.dispositivos || [], function (x) {
           var pct = null;
-          if (x.brilho && typeof x.brilho.valor === 'number') { pct = Math.max(1, Math.min(100, Math.round((x.brilho.valor - x.brilho.min) / (x.brilho.max - x.brilho.min) * 100))); }
+          if (x.brilho && typeof x.brilho.valor === 'number') { pct = Math.max(1, Math.min(100, Math.round(x.brilho.valor / x.brilho.max * 100))); }
           out.push({ key: x.chave, id: x.id, nome: x.nome, tipo: x.tipo, online: x.online, ligado: x.ligado, brilho: pct, podeBrilho: !!x.brilho, podeCor: !!x.cor, podeTemp: !!x.temp, t: x });
         });
         cb(null, out);
@@ -1088,7 +1256,7 @@
         var c = t.cor.valor;
         cmds.push({ code: t.cor.code, value: { h: c.h, s: c.s, v: Math.max(1, Math.round(pct / 100 * t.cor.vmax)) } });
       } else if (t.brilho) {
-        cmds.push({ code: t.brilho.code, value: Math.round(t.brilho.min + (t.brilho.max - t.brilho.min) * pct / 100) });
+        cmds.push({ code: t.brilho.code, value: pctToTuya(pct, t.brilho) });
       }
       TUYA.cmd(dev, cmds, cb);
     },
@@ -1102,11 +1270,16 @@
         cb(err);
       });
     },
-    setWarm: function (dev, cb) {
+    setWhite: function (dev, pct, k, cb) {
       var t = dev.t, cmds = [{ code: t.sw, value: true }];
+      if (!t.temp && !t.brilho && t.cor) {
+        var hs = kToHs(k);
+        TUYA.setColor(dev, { h: hs.h, s: hs.s, v: pct }, cb);
+        return;
+      }
       if (t.modo) { cmds.push({ code: t.modo.code, value: 'white' }); }
-      if (t.temp) { cmds.push({ code: t.temp.code, value: t.temp.min }); }
-      if (t.brilho) { cmds.push({ code: t.brilho.code, value: t.brilho.max }); }
+      if (t.temp) { cmds.push({ code: t.temp.code, value: kToTuya(k, t.temp) }); }
+      if (t.brilho) { cmds.push({ code: t.brilho.code, value: pctToTuya(pct, t.brilho) }); }
       TUYA.cmd(dev, cmds, function (err) { if (!err && t.modo) { t.modo.valor = 'white'; } cb(err); });
     }
   };
@@ -1145,7 +1318,8 @@
             tipo: dom === 'light' ? 'luz' : (/luz|light|candeeiro|lâmpada/i.test(a.friendly_name || '') ? 'luz' : 'tomada'),
             online: e.state !== 'unavailable', ligado: e.state === 'on',
             brilho: typeof a.brightness === 'number' ? Math.max(1, Math.round(a.brightness / 255 * 100)) : null,
-            podeBrilho: podeBrilho, podeCor: /hs|xy|rgb/.test(md), podeTemp: /color_temp/.test(md)
+            podeBrilho: podeBrilho, podeCor: /hs|xy|rgb/.test(md), podeTemp: /color_temp/.test(md),
+            kmin: a.min_color_temp_kelvin || 0, kmax: a.max_color_temp_kelvin || 0
           });
         });
         out.sort(sortDevs);
@@ -1163,14 +1337,21 @@
     setOn: function (dev, on, cb) { HA.svc(dev.dom, on ? 'turn_on' : 'turn_off', { entity_id: dev.id }, cb); },
     setBright: function (dev, pct, cb) { HA.svc('light', 'turn_on', { entity_id: dev.id, brightness_pct: pct }, cb); },
     setColor: function (dev, hsv, cb) { HA.svc('light', 'turn_on', { entity_id: dev.id, hs_color: [hsv.h, hsv.s], brightness_pct: hsv.v }, cb); },
-    setWarm: function (dev, cb) {
+    setWhite: function (dev, pct, k, cb) {
       var d = { entity_id: dev.id };
-      if (dev.podeTemp) { d.color_temp_kelvin = 2700; }
-      if (dev.podeBrilho) { d.brightness_pct = 100; }
+      if (dev.podeBrilho) { d.brightness_pct = pct; }
+      if (dev.podeTemp) { d.color_temp_kelvin = Math.max(dev.kmin || 0, Math.min(dev.kmax || 99999, k)); }
+      else if (dev.podeCor) { var hs = kToHs(k); d.hs_color = [hs.h, hs.s]; }
       HA.svc(dev.dom === 'light' ? 'light' : dev.dom, 'turn_on', d, cb);
     }
   };
 
+  // Percentagem como na app Smart Life: valor / máximo (com o mínimo do equipamento).
+  function pctToTuya(pct, b) { return Math.max(b.min, Math.min(b.max, Math.round(pct / 100 * b.max))); }
+  // Tuya: 0 = branco mais quente, máximo = mais frio. 2200 K (ou menos) → o mais quente possível.
+  function kToTuya(k, t) { var f = Math.max(0, Math.min(1, (k - 2200) / 4300)); return Math.round(t.min + f * (t.max - t.min)); }
+  // Para luzes só RGB: tom âmbar aproximado à temperatura pedida.
+  function kToHs(k) { return { h: 30, s: Math.max(0, Math.min(80, Math.round(80 - (k - 2200) / 45))) }; }
   function sortDevs(a, b) {
     if (a.tipo !== b.tipo) { return a.tipo === 'luz' ? -1 : (b.tipo === 'luz' ? 1 : 0); }
     return a.nome < b.nome ? -1 : (a.nome > b.nome ? 1 : 0);
@@ -1239,14 +1420,14 @@
     }
     if (L.err) { errb.className = 'errbox'; errb.textContent = L.err; } else { errb.className = 'errbox hidden'; }
     var vis = L.devs.filter(function (d) { return L.editing || !isHidden(d.key); });
-    var anyCor = false, anyLuz = false;
-    each(L.devs, function (d) { if (!isHidden(d.key) && d.online) { if (d.podeCor) { anyCor = true; } if (d.tipo === 'luz') { anyLuz = true; } } });
+    var anyCor = false;
+    each(L.devs, function (d) { if (!isHidden(d.key) && d.online && d.podeCor) { anyCor = true; } });
     if (vis.length) {
       quick.className = '';
       quick.innerHTML = '<button type="button" class="green" data-q="on">Ligar tudo</button>' +
         '<button type="button" data-q="off">Desligar tudo</button>' +
         (anyCor || L.devs.some(function (d) { return XMAS_RE.test(d.nome); }) ? '<button type="button" class="red" data-q="natal">🎄 Modo Natal</button>' : '') +
-        (anyLuz ? '<button type="button" class="gold" data-q="quente">Branco quente</button>' : '');
+        '<button type="button" class="gold" data-q="cozy">🕯️ Cozy</button>';
     } else { quick.className = 'hidden'; }
     if (L.scenes.length && !L.editing) {
       var sh = '';
@@ -1319,15 +1500,17 @@
     if (!tasks.length) { toast(on ? 'Já está tudo ligado' : 'Já está tudo desligado'); return; }
     runQueue(tasks, function (errs) { if (errs.length) { toast(errs[0], true); } else { toast(on ? 'Tudo ligado' : 'Tudo desligado'); } });
   }
-  var PALETTE = [{ h: 0, s: 100, v: 100 }, { h: 120, s: 100, v: 75 }, { h: 42, s: 85, v: 100 }, { h: 348, s: 95, v: 65 }];
+  // Tons escuros e saturados: vermelho escuro, verde-pinheiro, âmbar, bordeaux. Intensidade nas definições.
+  var PALETTE = [{ h: 0, s: 100 }, { h: 130, s: 100 }, { h: 30, s: 100 }, { h: 340, s: 100 }];
+  function clampPct(v, def) { v = parseInt(v, 10); return isNaN(v) ? def : Math.max(1, Math.min(100, v)); }
   function natal() {
-    var p = L.prov, tasks = [], n = 0;
+    var p = L.prov, tasks = [], n = 0, v = clampPct(cfg.natalPct, 20);
     each(L.devs, function (d) {
       if (isHidden(d.key) || !d.online) { return; }
       if (d.podeCor) {
         var c = PALETTE[n++ % PALETTE.length];
         d.ligado = true; d.pending = true;
-        tasks.push(function (cb) { p.setColor(d, c, function (err) { d.pending = false; renderLights(); cb(err ? d.nome + ': ' + err : null); }); });
+        tasks.push(function (cb) { p.setColor(d, { h: c.h, s: c.s, v: v }, function (err) { d.pending = false; if (!err && d.podeBrilho) { d.brilho = v; } renderLights(); cb(err ? d.nome + ': ' + err : null); }); });
       } else if (XMAS_RE.test(d.nome) && !d.ligado) {
         d.ligado = true; d.pending = true;
         tasks.push(function (cb) { p.setOn(d, true, function (err) { d.pending = false; if (err) { d.ligado = false; } renderLights(); cb(err ? d.nome + ': ' + err : null); }); });
@@ -1337,22 +1520,77 @@
     if (!tasks.length) { toast('Não há luzes de cor nem enfeites de Natal ligados à tomada'); return; }
     runQueue(tasks, function (errs) { if (errs.length) { toast(errs[0], true); } else { toast('🎄 Modo Natal ativo'); } });
   }
-  function quente() {
-    var p = L.prov, tasks = [];
-    each(L.devs, function (d) {
-      if (isHidden(d.key) || !d.online || d.tipo !== 'luz') { return; }
+
+  // ---- Cozy: equipamentos escolhidos pelo nome ----
+  function nn(t) {
+    return String(t || '').toLowerCase().replace(/[áàâãä]/g, 'a').replace(/[éèêë]/g, 'e').replace(/[íìîï]/g, 'i')
+      .replace(/[óòôõö]/g, 'o').replace(/[úùûü]/g, 'u').replace(/ç/g, 'c');
+  }
+  var TYPEW = { tomada: 'tomada', ficha: 'tomada', luz: 'luz', lampada: 'luz', candeeiro: 'luz' };
+  function cozyTokens(txt) {
+    return String(txt === undefined ? cfg.cozyNomes : txt).split(/[,;\n]+/).map(trim).filter(function (x) { return !!x; });
+  }
+  function nameHas(name, key) {
+    var i = name.indexOf(key);
+    while (i > -1) {
+      if (!(/\d$/.test(key) && /\d/.test(name.charAt(i + key.length)))) { return true; }
+      i = name.indexOf(key, i + 1);
+    }
+    return false;
+  }
+  function tokenMatch(d, tok) {
+    var words = nn(tok).split(/\s+/).filter(function (x) { return !!x; });
+    var name = nn(d.nome), flat = name.replace(/[\s\-_.]+/g, '');
+    if (!words.length) { return false; }
+    if (TYPEW[words[0]] && words.length > 1) {
+      return nameHas(flat, words.slice(1).join('')) && (name.indexOf(words[0]) > -1 || d.tipo === TYPEW[words[0]]);
+    }
+    return nameHas(flat, words.join(''));
+  }
+  function cozyTargets(devs, txt) {
+    var out = [], missing = [];
+    each(cozyTokens(txt), function (tok) {
+      var found = false;
+      each(devs, function (d) { if (tokenMatch(d, tok)) { found = true; if (out.indexOf(d) < 0) { out.push(d); } } });
+      if (!found) { missing.push(tok); }
+    });
+    return { devs: out, missing: missing };
+  }
+  function cozy() {
+    var p = L.prov, m = cozyTargets(L.devs), tasks = [];
+    var pct = clampPct(cfg.cozyPct, 20), k = parseInt(cfg.cozyK, 10) || 2200;
+    if (!m.devs.length) { toast('Cozy: não encontrei ' + (cozyTokens().join(', ') || 'nenhum equipamento') + '. Veja ⚙ → Luzes.', true); return; }
+    var offline = [];
+    each(m.devs, function (d) {
+      if (!d.online) { offline.push(d.nome); return; }
+      var light = d.tipo === 'luz' && (d.podeBrilho || d.podeTemp || d.podeCor);
       d.ligado = true; d.pending = true;
       tasks.push(function (cb) {
-        var f = (d.podeBrilho || d.podeTemp || d.podeCor) ? p.setWarm : function (dv, c2) { p.setOn(dv, true, c2); };
-        f(d, function (err) { d.pending = false; if (!err && d.podeBrilho) { d.brilho = 100; } renderLights(); cb(err ? d.nome + ': ' + err : null); });
+        var done = function (err) {
+          d.pending = false;
+          if (!err && light && d.podeBrilho) { d.brilho = pct; }
+          renderLights(); cb(err ? d.nome + ': ' + err : null);
+        };
+        if (light) { p.setWhite(d, pct, k, done); } else { p.setOn(d, true, done); }
       });
     });
+    if (cfg.cozyApaga) {
+      each(L.devs, function (d) {
+        if (m.devs.indexOf(d) > -1 || !d.online || !d.ligado || d.tipo !== 'luz') { return; }
+        d.ligado = false; d.pending = true;
+        tasks.push(function (cb) { p.setOn(d, false, function (err) { d.pending = false; if (err) { d.ligado = true; } renderLights(); cb(err ? d.nome + ': ' + err : null); }); });
+      });
+    }
     renderLights();
-    runQueue(tasks, function (errs) { if (errs.length) { toast(errs[0], true); } else { toast('Luz branca quente'); } });
+    runQueue(tasks, function (errs) {
+      if (errs.length) { toast(errs[0], true); return; }
+      var warn = (m.missing.length ? ' · não encontrei: ' + m.missing.join(', ') : '') + (offline.length ? ' · sem ligação: ' + offline.join(', ') : '');
+      toast('🕯️ Cozy' + warn, !!warn);
+    });
   }
 
   $('lgrid').addEventListener('click', function (ev) {
-    if (closest(ev.target, 'data-setup', $('lgrid'))) { openCfg('sec-luzes'); return; }
+    if (closest(ev.target, 'data-setup', $('lgrid'))) { openCfg('sec-ponte'); return; }
     if (ev.target.tagName === 'INPUT') { return; }
     var tile = closest(ev.target, 'data-k', $('lgrid'));
     if (!tile) { return; }
@@ -1376,7 +1614,7 @@
     var b = closest(ev.target, 'data-q', $('lquick'));
     if (!b || !L.prov) { return; }
     var q = b.getAttribute('data-q');
-    if (q === 'on') { allSet(true); } else if (q === 'off') { allSet(false); } else if (q === 'natal') { natal(); } else if (q === 'quente') { quente(); }
+    if (q === 'on') { allSet(true); } else if (q === 'off') { allSet(false); } else if (q === 'natal') { natal(); } else if (q === 'cozy') { cozy(); }
   });
   $('lscenes').addEventListener('click', function (ev) {
     var b = closest(ev.target, 'data-sc', $('lscenes'));
@@ -1458,7 +1696,6 @@
   function setModeUI(m) {
     draftMode = m;
     each(document.querySelectorAll('#lmode button'), function (b) { b.className = b.getAttribute('data-m') === m ? 'on' : ''; });
-    $('f-tuya').className = m === 'tuya' ? '' : 'hidden';
     $('f-ha').className = m === 'ha' ? '' : 'hidden';
   }
   function fillTvSelect() {
@@ -1474,10 +1711,14 @@
     $('c-ponte').value = cfg.ponte; $('c-chave').value = cfg.chave;
     $('c-haurl').value = cfg.haUrl || (SERVED_BY_HA ? location.protocol + '//' + location.host : '');
     $('c-hatoken').value = cfg.haToken;
-    $('c-gcal').value = store.get('gcal', '');
+    $('c-cal').value = cfg.cal;
+    $('c-natal').value = cfg.natalPct;
+    $('c-cozy').value = cfg.cozyNomes; $('c-cozypct').value = cfg.cozyPct; $('c-cozyk').value = cfg.cozyK; $('c-cozyoff').checked = !!cfg.cozyApaga;
     $('c-neve').checked = !!cfg.neve; $('c-grinalda').checked = !!cfg.grinalda;
     $('c-local').textContent = 'Localidade atual: ' + cfg.local;
-    $('m-tuya').textContent = ''; $('m-ha').textContent = ''; $('geores').innerHTML = '';
+    each(['m-ponte', 'm-ha', 'm-cal', 'm-import'], function (id) { $(id).textContent = ''; });
+    $('geores').innerHTML = ''; $('qrbox').className = 'hidden'; $('c-import').value = '';
+    showCozyMatch();
     setModeUI(cfg.luzes);
     fillTvSelect();
     $('modal').className = '';
@@ -1492,16 +1733,85 @@
     var b = closest(ev.target, 'data-m', $('lmode'));
     if (b) { setModeUI(b.getAttribute('data-m')); }
   });
-  $('t-tuya').addEventListener('click', function () {
-    var keep = { ponte: cfg.ponte, chave: cfg.chave };
-    cfg.ponte = trim($('c-ponte').value); cfg.chave = trim($('c-chave').value);
-    if (!/^https:\/\//.test(cfg.ponte)) { msg('m-tuya', 'O endereço da ponte tem de começar por https://', false); cfg.ponte = keep.ponte; cfg.chave = keep.chave; return; }
-    msg('m-tuya', 'A testar…', true);
-    TUYA.list(function (err, devs) {
-      if (err) { msg('m-tuya', err, false); }
-      else { msg('m-tuya', 'Ligação feita: ' + devs.length + ' luzes/tomadas encontradas. Carregue em Guardar.', true); }
-      cfg.ponte = keep.ponte; cfg.chave = keep.chave;
+  function withDraft(keys, fn) { // testa com os valores do formulário sem os guardar
+    var keep = {};
+    each(keys, function (k) { keep[k[0]] = cfg[k[0]]; cfg[k[0]] = trim($(k[1]).value); });
+    fn(function () { for (var k in keep) { if (keep.hasOwnProperty(k)) { cfg[k] = keep[k]; } } });
+  }
+  $('t-ponte').addEventListener('click', function () {
+    if (!/^https:\/\//.test(trim($('c-ponte').value))) { msg('m-ponte', 'O endereço da ponte tem de começar por https://', false); return; }
+    msg('m-ponte', 'A testar…', true);
+    withDraft([['ponte', 'c-ponte'], ['chave', 'c-chave']], function (restore) {
+      TUYA.call({ acao: 'ping' }, function (err, d) {
+        var old = err && /desconhecida/i.test(err);
+        if (err && !old) { restore(); msg('m-ponte', err, false); return; }
+        var head = old ? 'Ponte antiga (versão 1): as luzes funcionam, mas para o Google Calendar cole o novo ponte-luzes.js no Cloudflare.' : 'Ponte ativa (versão ' + (d.versao || 2) + ').';
+        if (!old && !d.tuya) { restore(); msg('m-ponte', head + ' Ainda sem as chaves da Tuya (luzes).', true); return; }
+        TUYA.list(function (e2, devs) {
+          restore();
+          if (e2) { msg('m-ponte', head + ' Luzes: ' + e2, false); }
+          else { msg('m-ponte', head + ' ' + devs.length + ' luzes/tomadas encontradas. Carregue em Guardar.', !old); }
+        });
+      });
     });
+  });
+  $('t-cal').addEventListener('click', function () {
+    msg('m-cal', 'A testar…', true);
+    withDraft([['ponte', 'c-ponte'], ['chave', 'c-chave'], ['cal', 'c-cal']], function (restore) {
+      if (!bridgeReady()) { restore(); msg('m-cal', 'Primeiro ponha o endereço e a chave da ponte.', false); return; }
+      var t = new Date(), e = new Date(); e.setDate(t.getDate() + 60);
+      TUYA.call({ acao: 'calendario', fontes: calSources(), de: iso(t), ate: iso(e) }, function (err, d) {
+        restore();
+        if (err) { msg('m-cal', /desconhecida/i.test(err) ? 'A ponte é a versão antiga: cole o novo ponte-luzes.js no Cloudflare.' : err, false); return; }
+        if (d.erros && d.erros.length) { msg('m-cal', d.erros.join(' '), false); return; }
+        if (!d.fontes) { msg('m-cal', 'Cole o endereço secreto no formato iCal.', false); return; }
+        msg('m-cal', 'Ligação feita: ' + (d.eventos || []).length + ' eventos nos próximos 60 dias. Carregue em Guardar.', true);
+      });
+    });
+  });
+  function showCozyMatch() {
+    var el = $('m-cozy');
+    if (!L.devs.length) { el.textContent = ''; return; }
+    var m = cozyTargets(L.devs, $('c-cozy').value);
+    el.textContent = (m.devs.length ? 'Encontrados: ' + m.devs.map(function (d) { return d.nome; }).join(', ') : 'Nenhum equipamento encontrado') +
+      (m.missing.length ? ' · Não encontrei: ' + m.missing.join(', ') : '');
+  }
+  $('c-cozy').addEventListener('input', showCozyMatch);
+  // ---- passar para o iPad ----
+  function loadQrLib(cb) {
+    if (window.qrcode) { cb(); return; }
+    var sc = document.createElement('script');
+    sc.src = 'qrcode.min.js';
+    sc.onload = function () { cb(window.qrcode ? null : 'erro'); };
+    sc.onerror = function () { cb('erro'); };
+    document.head.appendChild(sc);
+  }
+  $('t-qr').addEventListener('click', function () {
+    saveForm();
+    var link = exportLink();
+    $('qrlink').value = link;
+    $('qrbox').className = '';
+    loadQrLib(function (err) {
+      if (err) { $('qr').innerHTML = '<div style="color:#333;padding:20px;font-size:14px">Não consegui gerar o código. Use o link.</div>'; return; }
+      try {
+        var q = window.qrcode(0, 'L');
+        q.addData(link); q.make();
+        $('qr').innerHTML = q.createSvgTag({ cellSize: 4, margin: 2, scalable: true });
+      } catch (e) { $('qr').innerHTML = '<div style="color:#333;padding:20px;font-size:14px">Link demasiado longo para código QR. Use o link.</div>'; }
+    });
+  });
+  $('t-copy').addEventListener('click', function () {
+    var inp = $('qrlink'), done = function () { toast('Link copiado'); };
+    try {
+      if (navigator.clipboard && navigator.clipboard.writeText) { navigator.clipboard.writeText(inp.value).then(done, function () { inp.select(); document.execCommand('copy'); done(); }); return; }
+    } catch (e) {}
+    inp.select(); try { document.execCommand('copy'); done(); } catch (e2) {}
+  });
+  $('t-import').addEventListener('click', function () {
+    var r = importPkg($('c-import').value, true);
+    if (r !== 'ok') { msg('m-import', r, false); return; }
+    msg('m-import', 'Definições importadas. A recarregar…', true);
+    setTimeout(function () { location.reload(); }, 600);
   });
   $('t-ha').addEventListener('click', function () {
     var keep = { haUrl: cfg.haUrl, haToken: cfg.haToken };
@@ -1543,17 +1853,27 @@
     $('geores').innerHTML = '';
     loadWx();
   });
-  $('cfgsave').addEventListener('click', function () {
+  function saveForm() {
+    var oldCal = cfg.cal + '|' + cfg.ponte + '|' + cfg.chave;
     cfg.luzes = draftMode;
     cfg.ponte = trim($('c-ponte').value); cfg.chave = trim($('c-chave').value);
     cfg.haUrl = trim($('c-haurl').value); cfg.haToken = trim($('c-hatoken').value);
     cfg.tv = $('c-tv').value;
+    cfg.cal = trim($('c-cal').value);
+    cfg.natalPct = clampPct($('c-natal').value, 20);
+    cfg.cozyNomes = trim($('c-cozy').value);
+    cfg.cozyPct = clampPct($('c-cozypct').value, 20);
+    cfg.cozyK = Math.max(1500, Math.min(6500, parseInt($('c-cozyk').value, 10) || 2200));
+    cfg.cozyApaga = $('c-cozyoff').checked;
     cfg.neve = $('c-neve').checked; cfg.grinalda = $('c-grinalda').checked;
     saveCfg();
-    var g = trim($('c-gcal').value);
-    if (g) { store.set('gcal', g); } else { store.del('gcal'); }
-    applyGcal(); applyDecor();
+    if (oldCal !== cfg.cal + '|' + cfg.ponte + '|' + cfg.chave) { G.cache = {}; G.err = ''; }
+  }
+  $('cfgsave').addEventListener('click', function () {
+    saveForm();
+    applyDecor();
     closeCfg();
+    G.cache = {}; G.err = ''; calRefresh(true); renderCal(); renderEvents();
     L.prov = undefined;
     loadLights(true);
     renderTV();
@@ -1567,7 +1887,7 @@
       return;
     }
     clearTimeout(wipeTimer); wipeTimer = null;
-    each(['events', 'shop', 'expenses', 'limit', 'gcal', 'wxcache', 'cfg', 'devcache', 'ocultos', 'tab'], function (k) { store.del(k); });
+    each(['events', 'shop', 'expenses', 'limit', 'gcal', 'wxcache', 'cfg', 'devcache', 'ocultos', 'tab', 'importStamp'], function (k) { store.del(k); });
     location.reload();
   });
 
@@ -1594,7 +1914,6 @@
 
   snowSize(); snowInit();
   applyDecor();
-  applyGcal();
   renderShop(); renderBud();
   tick();
   setInterval(tick, 1000);
@@ -1603,6 +1922,9 @@
   renderTV();
   if (tvReady()) { refreshTV(); }
   loadWx();
+  calRefresh(false);
+  setInterval(function () { if (!document.hidden) { calRefresh(false); } }, 5 * 60000);
+  if (IMPORTED) { toast('Definições importadas'); }
 
   window.painelDebug = { L: L, cfg: function () { return cfg; }, xmasText: xmasText };
 })();

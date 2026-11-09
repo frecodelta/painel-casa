@@ -1,13 +1,14 @@
 /*
- * Ponte das luzes — Cloudflare Worker
- * Liga o Painel da Casa às luzes e tomadas da Smart Life (Tuya Cloud).
- * A chave secreta da Tuya fica aqui, no servidor; o iPad só conhece a PAINEL_CHAVE.
+ * Ponte do Painel da Casa — Cloudflare Worker  (versão 2)
+ * - Luzes e tomadas da Smart Life (Tuya Cloud). A chave secreta da Tuya fica aqui, não no iPad.
+ * - Google Calendar: lê o endereço iCal (privado ou público) e devolve os eventos já com as repetições.
  *
  * Variáveis a criar no Worker (Settings → Variables and Secrets):
+ *   PAINEL_CHAVE        Uma palavra-passe à sua escolha, a mesma que põe no painel (tipo Secret)
  *   TUYA_ACCESS_ID      Access ID / Client ID do projeto em iot.tuya.com
  *   TUYA_ACCESS_SECRET  Access Secret / Client Secret do projeto  (tipo Secret)
- *   PAINEL_CHAVE        Uma palavra-passe à sua escolha, a mesma que põe no painel (tipo Secret)
  *   TUYA_REGIAO         Opcional: eu (predefinido), weu, us, cn, in
+ *   CALENDARIO_ICAL     Opcional: endereço(s) iCal, separados por espaço (em alternativa ao campo do painel)
  */
 
 const HOSTS = {
@@ -242,34 +243,410 @@ function sameKey(a, b) {
   return r === 0;
 }
 
+
+// ---------- Google Calendar (iCal) ----------
+const DAY = 86400000;
+const CAL_HOSTS = /^(calendar\.google\.com|outlook\.office365\.com|outlook\.live\.com|[a-z0-9-]+\.icloud\.com)$/i;
+const WIN_TZ = {
+  'GMT Standard Time': 'Europe/London', 'W. Europe Standard Time': 'Europe/Berlin', 'Romance Standard Time': 'Europe/Paris',
+  'Central European Standard Time': 'Europe/Warsaw', 'Central Europe Standard Time': 'Europe/Budapest', 'UTC': 'UTC',
+  'Eastern Standard Time': 'America/New_York', 'Pacific Standard Time': 'America/Los_Angeles', 'E. South America Standard Time': 'America/Sao_Paulo'
+};
+const calCache = new Map(); // url -> { t, text }
+
+export function calUrl(src) {
+  src = String(src || '').trim();
+  if (!src) return null;
+  if (/^webcal:\/\//i.test(src)) src = 'https://' + src.slice(9);
+  if (/^https:\/\//i.test(src)) {
+    let u;
+    try { u = new URL(src); } catch (e) { return null; }
+    return CAL_HOSTS.test(u.hostname) ? u.toString() : null;
+  }
+  if (/^[^\s/@]+@[^\s/@]+\.[^\s/@]+$/.test(src)) {
+    return 'https://calendar.google.com/calendar/ical/' + encodeURIComponent(src) + '/public/basic.ics';
+  }
+  return null;
+}
+
+const dtfCache = {};
+function validTz(tz) {
+  if (!tz) return null;
+  tz = WIN_TZ[tz] || tz;
+  if (tz === 'UTC') return tz;
+  try { new Intl.DateTimeFormat('en-US', { timeZone: tz }); return tz; } catch (e) { return null; }
+}
+function tzOffset(utcMs, tz) {
+  if (tz === 'UTC') return 0;
+  let f = dtfCache[tz];
+  if (!f) {
+    f = dtfCache[tz] = new Intl.DateTimeFormat('en-US', {
+      timeZone: tz, hourCycle: 'h23', year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', second: '2-digit'
+    });
+  }
+  const p = {};
+  for (const x of f.formatToParts(new Date(utcMs))) p[x.type] = x.value;
+  const asUtc = Date.UTC(+p.year, +p.month - 1, +p.day, +p.hour % 24, +p.minute, +p.second);
+  return asUtc - Math.floor(utcMs / 1000) * 1000;
+}
+// hora "de parede" (escrita como se fosse UTC) num fuso → instante real
+export function wallToUtc(wallMs, tz) {
+  if (tz === 'UTC') return wallMs;
+  const off = tzOffset(wallMs, tz);
+  let utc = wallMs - off;
+  const off2 = tzOffset(utc, tz);
+  if (off2 !== off) utc = wallMs - off2;
+  return utc;
+}
+
+function unescapeText(v) {
+  return String(v).replace(/\\n/gi, '\n').replace(/\\([,;\\])/g, '$1').trim();
+}
+
+function parseLine(line) {
+  let inQ = false, i = 0;
+  for (; i < line.length; i++) {
+    const c = line[i];
+    if (c === '"') inQ = !inQ;
+    else if (c === ':' && !inQ) break;
+  }
+  if (i >= line.length) return null;
+  const head = line.slice(0, i), value = line.slice(i + 1);
+  const parts = head.match(/("[^"]*"|[^;])+/g) || [head];
+  const params = {};
+  for (const p of parts.slice(1)) {
+    const k = p.indexOf('=');
+    if (k > 0) params[p.slice(0, k).toUpperCase()] = p.slice(k + 1).replace(/^"|"$/g, '');
+  }
+  return { name: parts[0].toUpperCase(), params, value };
+}
+
+function parseDate(value, params, defTz) {
+  const v = String(value).trim();
+  if (params.VALUE === 'DATE' || /^\d{8}$/.test(v)) {
+    const y = +v.slice(0, 4), m = +v.slice(4, 6), d = +v.slice(6, 8);
+    return { allDay: true, wall: Date.UTC(y, m - 1, d), tz: null };
+  }
+  const m = /^(\d{4})(\d{2})(\d{2})T(\d{2})(\d{2})(\d{2})(Z?)$/.exec(v);
+  if (!m) return null;
+  const wall = Date.UTC(+m[1], +m[2] - 1, +m[3], +m[4], +m[5], +m[6]);
+  const tz = m[7] ? 'UTC' : (validTz(params.TZID) || defTz);
+  return { allDay: false, wall, tz };
+}
+function instantOf(dt) { return dt.allDay ? dt.wall : wallToUtc(dt.wall, dt.tz); }
+function dateKey(ms) { return new Date(ms).toISOString().slice(0, 10); }
+
+function parseDuration(v) {
+  const m = /^([+-])?P(?:(\d+)W)?(?:(\d+)D)?(?:T(?:(\d+)H)?(?:(\d+)M)?(?:(\d+)S)?)?$/.exec(String(v || '').trim());
+  if (!m) return null;
+  const ms = ((+m[2] || 0) * 7 * DAY) + ((+m[3] || 0) * DAY) + ((+m[4] || 0) * 3600000) + ((+m[5] || 0) * 60000) + ((+m[6] || 0) * 1000);
+  return m[1] === '-' ? -ms : ms;
+}
+
+export function parseICS(text) {
+  const lines = String(text).replace(/\r\n?/g, '\n').replace(/\n[ \t]/g, '').split('\n');
+  let calTz = null, cur = null, inAlarm = 0;
+  const events = [];
+  for (const raw of lines) {
+    const line = raw.trimEnd();
+    if (!line) continue;
+    if (line === 'BEGIN:VEVENT') { cur = []; continue; }
+    if (line === 'END:VEVENT') { if (cur) events.push(cur); cur = null; continue; }
+    if (/^BEGIN:/.test(line) && cur) { inAlarm++; continue; }
+    if (/^END:/.test(line) && cur && inAlarm) { inAlarm--; continue; }
+    const p = parseLine(line);
+    if (!p) continue;
+    if (cur && !inAlarm) cur.push(p);
+    else if (!cur && p.name === 'X-WR-TIMEZONE') calTz = validTz(p.value.trim());
+  }
+  return { calTz, events };
+}
+
+function parseRule(v) {
+  const r = {};
+  for (const part of String(v).split(';')) {
+    const k = part.indexOf('=');
+    if (k > 0) r[part.slice(0, k).toUpperCase()] = part.slice(k + 1);
+  }
+  return r;
+}
+const WD = { SU: 0, MO: 1, TU: 2, WE: 3, TH: 4, FR: 5, SA: 6 };
+function daysInMonth(y, m0) { return new Date(Date.UTC(y, m0 + 1, 0)).getUTCDate(); }
+function nthWeekday(y, m0, wd, n) {
+  const dim = daysInMonth(y, m0);
+  if (n > 0) {
+    const first = new Date(Date.UTC(y, m0, 1)).getUTCDay();
+    const d = 1 + ((wd - first + 7) % 7) + (n - 1) * 7;
+    return d <= dim ? d : null;
+  }
+  const last = new Date(Date.UTC(y, m0, dim)).getUTCDay();
+  const d = dim - ((last - wd + 7) % 7) + (n + 1) * 7;
+  return d >= 1 ? d : null;
+}
+function monthDays(y, m0, rule, startDay) {
+  const dim = daysInMonth(y, m0);
+  let days = [];
+  if (rule.BYMONTHDAY) {
+    for (const x of rule.BYMONTHDAY.split(',')) {
+      const n = parseInt(x, 10);
+      const d = n < 0 ? dim + n + 1 : n;
+      if (d >= 1 && d <= dim) days.push(d);
+    }
+  } else if (rule.BYDAY) {
+    for (const x of rule.BYDAY.split(',')) {
+      const mm = /^([+-]?\d+)?([A-Z]{2})$/.exec(x.trim());
+      if (!mm || !(mm[2] in WD)) continue;
+      const wd = WD[mm[2]];
+      if (mm[1]) { const d = nthWeekday(y, m0, wd, parseInt(mm[1], 10)); if (d) days.push(d); }
+      else { for (let d = 1; d <= dim; d++) if (new Date(Date.UTC(y, m0, d)).getUTCDay() === wd) days.push(d); }
+    }
+  } else if (startDay <= dim) {
+    days.push(startDay);
+  }
+  return Array.from(new Set(days)).sort((a, b) => a - b);
+}
+
+// Devolve as horas "de parede" de cada ocorrência, por ordem, até ao fim da janela.
+export function expandRule(startWall, ruleText, endWall, untilCheck) {
+  const rule = parseRule(ruleText);
+  const freq = rule.FREQ;
+  const interval = Math.max(1, parseInt(rule.INTERVAL, 10) || 1);
+  const count = rule.COUNT ? parseInt(rule.COUNT, 10) : Infinity;
+  const tod = ((startWall % DAY) + DAY) % DAY;
+  const s = new Date(startWall);
+  const sy = s.getUTCFullYear(), sm = s.getUTCMonth(), sd = s.getUTCDate();
+  const byday = rule.BYDAY ? rule.BYDAY.split(',').map((x) => /([A-Z]{2})$/.exec(x.trim())).filter(Boolean).map((m) => WD[m[1]]) : null;
+  const bymonth = rule.BYMONTH ? rule.BYMONTH.split(',').map((x) => parseInt(x, 10) - 1) : null;
+  const out = [];
+  let n = 0, guard = 0;
+  const push = (w) => {
+    if (w < startWall) return true;
+    if (n >= count || w > endWall || (untilCheck && !untilCheck(w))) return false;
+    n++; out.push(w); return true;
+  };
+  if (freq === 'DAILY') {
+    for (let i = 0; guard++ < 40000; i++) {
+      const w = startWall + i * interval * DAY;
+      if (w > endWall || n >= count || (untilCheck && !untilCheck(w))) break;
+      const d = new Date(w);
+      if (byday && byday.indexOf(d.getUTCDay()) < 0) continue;
+      if (bymonth && bymonth.indexOf(d.getUTCMonth()) < 0) continue;
+      if (!push(w)) break;
+    }
+  } else if (freq === 'WEEKLY') {
+    const wkst = WD[rule.WKST] !== undefined ? WD[rule.WKST] : 1;
+    const days = (byday && byday.length ? byday : [s.getUTCDay()]).slice().sort((a, b) => ((a - wkst + 7) % 7) - ((b - wkst + 7) % 7));
+    const weekStart = startWall - ((s.getUTCDay() - wkst + 7) % 7) * DAY;
+    outer: for (let w = 0; guard++ < 10000; w++) {
+      const base = weekStart + w * interval * 7 * DAY;
+      if (base > endWall) break;
+      for (const wd of days) {
+        const cand = base + ((wd - wkst + 7) % 7) * DAY;
+        if (!push(cand)) break outer;
+      }
+    }
+  } else if (freq === 'MONTHLY') {
+    outer: for (let k = 0; guard++ < 3000; k++) {
+      const mi = sm + k * interval, y = sy + Math.floor(mi / 12), m0 = ((mi % 12) + 12) % 12;
+      if (Date.UTC(y, m0, 1) > endWall) break;
+      if (bymonth && bymonth.indexOf(m0) < 0) continue;
+      for (const d of monthDays(y, m0, rule, sd)) {
+        if (!push(Date.UTC(y, m0, d) + tod)) break outer;
+      }
+    }
+  } else if (freq === 'YEARLY') {
+    outer: for (let k = 0; guard++ < 400; k++) {
+      const y = sy + k * interval;
+      if (Date.UTC(y, 0, 1) > endWall) break;
+      const months = bymonth || [sm];
+      for (const m0 of months) {
+        const r2 = (rule.BYDAY && !bymonth) ? { BYMONTHDAY: rule.BYMONTHDAY } : rule;
+        for (const d of monthDays(y, m0, r2, sd)) {
+          if (!push(Date.UTC(y, m0, d) + tod)) break outer;
+        }
+      }
+    }
+  } else {
+    push(startWall);
+  }
+  return out;
+}
+
+function propsOf(ev) {
+  const one = {}, many = {};
+  for (const p of ev) {
+    if (!(p.name in one)) one[p.name] = p;
+    (many[p.name] = many[p.name] || []).push(p);
+  }
+  return { one, many };
+}
+
+export function eventsFromICS(text, fromMs, toMs, calIndex, defTz) {
+  const { calTz, events } = parseICS(text);
+  const tz0 = calTz || defTz || 'Europe/Lisbon';
+  const out = [];
+  const overrides = {}; // uid -> Set(chaves de ocorrência substituídas)
+  const parsed = [];
+  for (const ev of events) {
+    const { one, many } = propsOf(ev);
+    if (!one.DTSTART) continue;
+    const st = parseDate(one.DTSTART.value, one.DTSTART.params, tz0);
+    if (!st) continue;
+    const uid = one.UID ? one.UID.value.trim() : Math.random().toString(36);
+    let durMs;
+    if (one.DTEND) {
+      const en = parseDate(one.DTEND.value, one.DTEND.params, tz0);
+      durMs = en ? instantOf(en) - instantOf(st) : 0;
+    } else if (one.DURATION) {
+      durMs = parseDuration(one.DURATION.value) || 0;
+    } else {
+      durMs = st.allDay ? DAY : 0;
+    }
+    if (st.allDay && durMs < DAY) durMs = DAY;
+    const item = { one, many, st, uid, durMs, cancelled: one.STATUS && /CANCELLED/i.test(one.STATUS.value) };
+    if (one['RECURRENCE-ID']) {
+      const rid = parseDate(one['RECURRENCE-ID'].value, one['RECURRENCE-ID'].params, tz0);
+      if (rid) (overrides[uid] = overrides[uid] || new Set()).add(rid.allDay ? dateKey(rid.wall) : String(instantOf(rid)));
+      item.isOverride = true;
+    }
+    parsed.push(item);
+  }
+  const emit = (item, startInstant) => {
+    if (item.cancelled) return;
+    const endInstant = startInstant + item.durMs;
+    if (endInstant <= fromMs || startInstant >= toMs) return;
+    const t = item.one.SUMMARY ? unescapeText(item.one.SUMMARY.value) : '(sem título)';
+    const loc = item.one.LOCATION ? unescapeText(item.one.LOCATION.value) : '';
+    const e = item.st.allDay ?
+      { t, dia: true, ini: dateKey(startInstant), fim: dateKey(endInstant) } :
+      { t, dia: false, ini: new Date(startInstant).toISOString(), fim: new Date(endInstant).toISOString() };
+    if (loc) e.local = loc.slice(0, 120);
+    e.cal = calIndex;
+    e.id = (item.uid + '@' + e.ini).slice(0, 200);
+    out.push(e);
+  };
+  for (const item of parsed) {
+    if (item.isOverride || !item.one.RRULE) { emit(item, instantOf(item.st)); continue; }
+    const st = item.st;
+    const ex = new Set();
+    for (const p of item.many.EXDATE || []) {
+      for (const v of p.value.split(',')) {
+        const d = parseDate(v, p.params, st.tz || tz0);
+        if (d) ex.add(st.allDay ? dateKey(d.wall) : String(instantOf(d)));
+      }
+    }
+    const ov = overrides[item.uid] || new Set();
+    const rule = parseRule(item.one.RRULE.value);
+    let untilCheck = null;
+    if (rule.UNTIL) {
+      const u = parseDate(rule.UNTIL, {}, st.tz || tz0);
+      if (u) {
+        const uInst = u.allDay ? u.wall + DAY - 1 : instantOf(u);
+        untilCheck = st.allDay ? (w) => w <= uInst : (w) => wallToUtc(w, st.tz) <= uInst;
+      }
+    }
+    // fim da janela em hora "de parede" (folga de 2 dias para fusos)
+    const endWall = toMs + 2 * DAY;
+    const walls = expandRule(st.wall, item.one.RRULE.value, endWall, untilCheck);
+    for (const w of walls) {
+      const inst = st.allDay ? w : wallToUtc(w, st.tz);
+      const key = st.allDay ? dateKey(w) : String(inst);
+      if (ex.has(key) || ov.has(key)) continue;
+      if (inst + item.durMs < fromMs - DAY) continue;
+      emit(item, inst);
+    }
+  }
+  out.sort((a, b) => (a.ini < b.ini ? -1 : a.ini > b.ini ? 1 : 0));
+  return out;
+}
+
+async function fetchIcs(url) {
+  const c = calCache.get(url);
+  if (c && Date.now() - c.t < 10 * 60000) return c.text;
+  const res = await fetch(url, { headers: { 'User-Agent': 'PainelDaCasa/2' }, redirect: 'follow' });
+  if (!res.ok) {
+    const e = new Error(res.status === 404 || res.status === 403 ?
+      'Calendário não encontrado ou privado. Use o "endereço secreto no formato iCal" do Google Calendar.' :
+      'O calendário respondeu com erro ' + res.status + '.');
+    e.code = 'cal' + res.status;
+    throw e;
+  }
+  const text = await res.text();
+  if (text.indexOf('BEGIN:VCALENDAR') < 0) {
+    const e = new Error('O endereço não devolveu um calendário iCal. Confirme que copiou o "endereço secreto no formato iCal".');
+    e.code = 'calformato';
+    throw e;
+  }
+  calCache.set(url, { t: Date.now(), text });
+  return text;
+}
+
+async function calendar(env, req) {
+  const srcs = [];
+  const add = (s) => { const u = calUrl(s); if (u && srcs.indexOf(u) < 0) srcs.push(u); };
+  (Array.isArray(req.fontes) ? req.fontes : []).slice(0, 6).forEach(add);
+  String(env.CALENDARIO_ICAL || '').split(/[\s,]+/).forEach(add);
+  const bad = (Array.isArray(req.fontes) ? req.fontes : []).filter((s) => String(s || '').trim() && !calUrl(s));
+  const isoDay = /^\d{4}-\d{2}-\d{2}$/;
+  let from = isoDay.test(req.de || '') ? Date.parse(req.de + 'T00:00:00Z') : Date.now() - DAY;
+  let to = isoDay.test(req.ate || '') ? Date.parse(req.ate + 'T00:00:00Z') + DAY : Date.now() + 62 * DAY;
+  if (!(to > from)) to = from + 62 * DAY;
+  if (to - from > 400 * DAY) to = from + 400 * DAY;
+  const eventos = [], erros = [];
+  if (bad.length) erros.push('Endereço não reconhecido: use o endereço iCal do Google Calendar.');
+  for (let i = 0; i < srcs.length; i++) {
+    try {
+      const text = await fetchIcs(srcs[i]);
+      eventosPush(eventos, eventsFromICS(text, from, to, i, 'Europe/Lisbon'));
+    } catch (e) {
+      erros.push(e.message);
+    }
+  }
+  eventos.sort((a, b) => (a.ini < b.ini ? -1 : a.ini > b.ini ? 1 : 0));
+  return { eventos: eventos.slice(0, 600), erros, fontes: srcs.length };
+}
+function eventosPush(arr, list) { for (const e of list) arr.push(e); }
+
 // ---------- pedidos ----------
 export default {
   async fetch(request, env) {
     if (request.method === 'OPTIONS') return new Response(null, { status: 204, headers: CORS });
 
-    const configured = !!(env.TUYA_ACCESS_ID && env.TUYA_ACCESS_SECRET && env.PAINEL_CHAVE);
+    const hasKey = !!env.PAINEL_CHAVE;
+    const hasTuya = !!(env.TUYA_ACCESS_ID && env.TUYA_ACCESS_SECRET);
 
     if (request.method === 'GET') {
       const html = '<!DOCTYPE html><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">' +
-        '<title>Ponte das luzes</title><body style="font-family:-apple-system,sans-serif;background:#2a0610;color:#fff8ec;padding:32px">' +
-        '<h1 style="color:#f3d77c">🎄 Ponte das luzes</h1><p>' +
-        (configured ? 'A ponte está ativa. Ponha este endereço e a sua chave nas definições do painel.' :
-          'Falta configurar: TUYA_ACCESS_ID, TUYA_ACCESS_SECRET e PAINEL_CHAVE (Settings → Variables and Secrets).') +
-        '</p></body>';
+        '<title>Ponte do painel</title><body style="font-family:-apple-system,sans-serif;background:#2a0610;color:#fff8ec;padding:32px">' +
+        '<h1 style="color:#f3d77c">🎄 Ponte do painel</h1><p>' +
+        (hasKey ? 'A ponte está ativa (versão 2). Ponha este endereço e a sua chave nas definições do painel.' :
+          'Falta configurar a variável PAINEL_CHAVE (Settings → Variables and Secrets).') +
+        '</p><p>Luzes Smart Life: ' + (hasTuya ? 'configuradas' : 'falta TUYA_ACCESS_ID e TUYA_ACCESS_SECRET') + '</p></body>';
       return new Response(html, { headers: { 'Content-Type': 'text/html; charset=utf-8', ...CORS } });
     }
 
     if (request.method !== 'POST') return json({ ok: false, erro: 'Método não suportado.' }, 405);
-    if (!configured) return json({ ok: false, erro: 'A ponte ainda não tem as variáveis TUYA_ACCESS_ID, TUYA_ACCESS_SECRET e PAINEL_CHAVE.' });
+    if (!hasKey) return json({ ok: false, erro: 'A ponte ainda não tem a variável PAINEL_CHAVE.' });
 
     let req;
     try { req = JSON.parse(await request.text()); } catch (e) { return json({ ok: false, erro: 'Pedido inválido.' }, 400); }
     if (!req || !sameKey(String(req.chave || ''), String(env.PAINEL_CHAVE))) {
       return json({ ok: false, erro: 'Chave errada.', codigo: 'chave' }, 401);
     }
+    const TUYA_ACTIONS = ['estado', 'dispositivos', 'comando', 'cenas', 'cena'];
+    if (TUYA_ACTIONS.indexOf(req.acao) > -1 && !hasTuya) {
+      return json({ ok: false, erro: 'A ponte ainda não tem as variáveis TUYA_ACCESS_ID e TUYA_ACCESS_SECRET.' });
+    }
 
     try {
       switch (req.acao) {
+        case 'ping': {
+          return json({ ok: true, versao: 2, tuya: hasTuya, calendario: !!env.CALENDARIO_ICAL });
+        }
+        case 'calendario': {
+          const r = await calendar(env, req);
+          return json({ ok: true, eventos: r.eventos, erros: r.erros, fontes: r.fontes });
+        }
         case 'estado': {
           await getToken(env, true);
           return json({ ok: true });
