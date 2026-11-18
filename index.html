@@ -238,6 +238,30 @@
   label.chkrow input { width: 24px; height: 24px; min-height: 0; margin: 0 10px 0 0; -webkit-appearance: checkbox; appearance: checkbox; }
   #geores button { display: block; width: 100%; text-align: left; margin-top: 6px; }
   .row > input.num { -webkit-flex: none; flex: none; width: 92px; }
+  .bigcode { font-family: var(--serif); font-size: 40px; letter-spacing: 6px; color: var(--gold-l); text-align: center; padding: 10px 0; -webkit-user-select: all; user-select: all; }
+  /* orçamento da app */
+  .stats { font-size: 0; margin: 0 -4px; }
+  .stat { display: inline-block; vertical-align: top; width: 50%; padding: 4px; font-size: 14px; }
+  .stat > div { border-radius: 14px; padding: 10px 12px; background: rgba(255,246,232,.05); border: 1px solid rgba(243,215,124,.15); min-height: 92px; }
+  .stat.main > div { background: linear-gradient(150deg, rgba(36,128,79,.5), rgba(15,59,39,.65)); border-color: rgba(57,217,138,.35); }
+  .stat .v { font-family: var(--serif); font-size: 25px; line-height: 1.2; margin-top: 2px; white-space: nowrap; }
+  .stat .v.neg { color: #ff8a98; }
+  .stat .v.mut { font-size: 17px; color: var(--muted); line-height: 1.7; }
+  .stat small { display: block; color: var(--muted); font-size: 11.5px; line-height: 1.3; margin-top: 2px; }
+  .warnbox { background: rgba(201,161,46,.18); border: 1px solid rgba(243,215,124,.45); border-radius: 12px; padding: 9px 12px; font-size: 13.5px; line-height: 1.4; margin-top: 8px; }
+  .crow { padding: 8px 2px; border-bottom: 1px solid rgba(243,215,124,.1); }
+  .ctop { display: -webkit-flex; display: flex; -webkit-align-items: center; align-items: center; }
+  .cdot { -webkit-flex: none; flex: none; width: 10px; height: 10px; border-radius: 5px; margin-right: 8px; }
+  .cname { -webkit-flex: 1; flex: 1; min-width: 0; font-size: 15px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .crest { -webkit-flex: none; flex: none; font-size: 14px; margin-left: 8px; white-space: nowrap; }
+  .crest.neg { color: #ff8a98; font-weight: 600; }
+  .csub { font-size: 12px; color: var(--muted); margin-top: 3px; }
+  .bar.thin { height: 6px; margin: 6px 0 0; }
+  .badge { -webkit-flex: none; flex: none; font-size: 10.5px; border-radius: 10px; padding: 2px 7px; margin-left: 6px; background: rgba(229,57,79,.28); color: #ffb3bd; white-space: nowrap; }
+  .badge.ok { background: rgba(201,161,46,.28); color: var(--gold-l); }
+  .item .amt.inc { color: #7ef0b3; }
+  .src { font-size: 12px; color: var(--muted); margin-right: 6px; }
+  #oaform h3 { margin-top: 16px; }
   .lab { -webkit-flex: none; flex: none; font-size: 15px; color: var(--muted); }
   .unit { -webkit-flex: none; flex: none; font-size: 15px; color: var(--muted); }
   #qr { display: inline-block; background: #fff; padding: 10px; border-radius: 14px; margin-top: 10px; }
@@ -337,7 +361,8 @@
     <!-- COMPRAS -->
     <section class="view" id="v-compras">
       <div class="card">
-        <div class="chead"><h2>Lista de compras</h2><button type="button" class="ghost small hidden" id="shopclear"></button></div>
+        <div class="chead"><h2>Lista de compras</h2><div class="tools"><span class="src" id="shopsrc"></span><button type="button" class="ghost small icon hidden" id="shoprefresh" aria-label="Atualizar">⟳</button><button type="button" class="ghost small hidden" id="shopclear"></button></div></div>
+        <div class="errbox hidden" id="shoperr"></div>
         <form id="shopform" autocomplete="off">
           <div class="row" style="margin-top:0"><input type="text" id="shopin" placeholder="Adicionar à lista…" autocapitalize="sentences"><button type="submit" class="red">Adicionar</button></div>
         </form>
@@ -370,6 +395,32 @@
       <div class="card">
         <div class="chead"><h2>Últimas despesas</h2></div>
         <div class="cbody"><ul id="explist"></ul></div>
+      </div>
+    </section>
+
+    <!-- ORÇAMENTO (app Meu Orçamento) -->
+    <section class="view" id="v-orcapp">
+      <div class="card">
+        <div class="chead"><h2 id="oatitle">Orçamento</h2><div class="tools"><button type="button" class="small icon" id="oaprev" aria-label="Mês anterior">‹</button> <button type="button" class="small" id="oahoje">hoje</button> <button type="button" class="small icon" id="oanext" aria-label="Mês seguinte">›</button></div></div>
+        <div class="cbody">
+          <div class="errbox hidden" id="oaerr"></div>
+          <div class="stats" id="oastats"></div>
+          <div class="warnbox hidden" id="oaexcess"></div>
+          <form id="oaform" autocomplete="off">
+            <h3>Lançar na app</h3>
+            <div class="seg" id="oatipo" style="margin-top:0"><button type="button" data-t="expense" class="on">Despesa</button><button type="button" data-t="income">Rendimento</button></div>
+            <div class="row"><input type="text" id="oavalor" inputmode="decimal" placeholder="Valor (€)" style="max-width:140px"><select id="oacat"></select></div>
+            <div class="row"><input type="text" id="oadesc" placeholder="Descrição" autocapitalize="sentences" maxlength="200"><button type="submit" class="red" id="oasubmit">Lançar</button></div>
+          </form>
+        </div>
+      </div>
+      <div class="card">
+        <div class="chead"><h2>Por categoria</h2><span class="src" id="oastatus"></span></div>
+        <div class="cbody">
+          <ul id="oacats"></ul>
+          <h3>Últimos movimentos</h3>
+          <ul id="oamovs"></ul>
+        </div>
       </div>
     </section>
 
@@ -489,6 +540,38 @@
       <label class="chkrow"><input type="checkbox" id="c-cozyoff"> Apagar as outras luzes</label>
       <div class="hint" id="m-cozy"></div>
       <p class="hint">2200 K é luz muito quente; se a lâmpada não descer tanto, fica na cor mais quente que permitir. As tomadas só ligam.</p>
+    </div>
+
+    <div class="sec" id="sec-orc">
+      <h3>Orçamento (app Meu Orçamento)</h3>
+      <div class="row"><input type="password" id="c-orc" placeholder="Chave do orçamento" autocapitalize="none" autocorrect="off" spellcheck="false"><button type="button" class="green" id="t-orc">Testar</button></div>
+      <div class="msg" id="m-orc"></div>
+      <p class="hint">Com a chave, o separador Orçamento mostra os números da sua app, com as mesmas regras, e o que lançar no painel entra na app. Sem chave, o painel usa o orçamento simples guardado só neste aparelho.</p>
+    </div>
+
+    <div class="sec" id="sec-todo">
+      <h3>Lista de compras (Microsoft To Do)</h3>
+      <div class="hint" id="todostate"></div>
+      <div class="row"><button type="button" class="green" id="t-todo">Ligar ao Microsoft To Do</button><button type="button" class="ghost hidden" id="t-todooff">Desligar</button></div>
+      <div id="todocode" class="hidden">
+        <p class="hint">Num telemóvel ou computador, abra <b>microsoft.com/devicelogin</b>, escreva este código e entre com a conta onde está a lista:</p>
+        <div class="bigcode" id="todocodev"></div>
+      </div>
+      <div class="row"><select id="c-todolista"><option value="">Escolher a lista</option></select></div>
+      <div class="msg" id="m-todo"></div>
+      <details>
+        <summary>Antes de ligar: registar o painel no Azure (cerca de 10 minutos, uma vez)</summary>
+        <ol>
+          <li>Em <b>portal.azure.com</b>, entre com a conta Microsoft onde está a lista. Uma conta pessoal serve e não é preciso subscrição paga.</li>
+          <li>Procure <b>App registrations → New registration</b>. Nome: <code>Painel da casa</code>. Em <b>Supported account types</b> escolha <b>Accounts in any organizational directory and personal Microsoft accounts</b> e carregue em <b>Register</b>.</li>
+          <li>Na app criada, abra <b>Authentication</b>, ative <b>Allow public client flows</b> e guarde.</li>
+          <li>Em <b>API permissions → Add a permission → Microsoft Graph → Delegated permissions</b>, escolha <b>Tasks.ReadWrite</b> e adicione.</li>
+          <li>Em <b>Overview</b>, copie o <b>Application (client) ID</b>.</li>
+          <li>No Cloudflare, no Worker da ponte: <b>Settings → Variables and Secrets</b>, crie <code>MS_CLIENT_ID</code> com esse valor. A ponte tem de estar na versão 3 (cole o <code>ponte-luzes.js</code> novo em <b>Edit code → Deploy</b>).</li>
+          <li>Aqui, carregue em <b>Ligar ao Microsoft To Do</b>, escreva o código em microsoft.com/devicelogin e escolha a lista.</li>
+        </ol>
+        <p class="hint">Cada aparelho (computador, iPad) liga-se uma vez com o seu próprio código; o código QR das definições não leva esta autorização.</p>
+      </details>
     </div>
 
     <div class="sec" id="sec-cal">
@@ -645,8 +728,11 @@
   // ================= configuração =================
   var DEF = {
     local: 'Póvoa de Santa Iria', lat: 38.857, lon: -9.06, luzes: 'nenhuma', ponte: '', chave: '', haUrl: '', haToken: '', tv: '',
-    cal: '', natalPct: 20, cozyNomes: 'tomada sala, pe1, pe2', cozyPct: 20, cozyK: 2200, cozyApaga: false, neve: true, grinalda: true
+    cal: '', natalPct: 20, cozyNomes: 'tomada sala, pe1, pe2', cozyPct: 20, cozyK: 2200, cozyApaga: false, neve: true, grinalda: true,
+    orcToken: '', orcUrl: 'https://qsentkxmadbkebwlywqe.supabase.co', orcKey: 'sb_publishable_SRZXkrNRE78iUCEUbdsusA_8UYs5IjJ',
+    msRefresh: '', todoLista: '', todoNome: ''
   };
+  var NOEXPORT = { msRefresh: true }; // a autorização da Microsoft é de cada aparelho
   function loadCfg() {
     var c = store.get('cfg', {}) || {}, o = {};
     for (var k in DEF) { if (DEF.hasOwnProperty(k)) { o[k] = c.hasOwnProperty(k) ? c[k] : DEF[k]; } }
@@ -664,7 +750,7 @@
   function b64d(t) { t = t.replace(/-/g, '+').replace(/_/g, '/'); while (t.length % 4) { t += '='; } return decodeURIComponent(escape(atob(t))); }
   function exportLink() {
     var c = {};
-    for (var k in DEF) { if (DEF.hasOwnProperty(k) && cfg[k] !== DEF[k]) { c[k] = cfg[k]; } }
+    for (var k in DEF) { if (DEF.hasOwnProperty(k) && !NOEXPORT[k] && cfg[k] !== DEF[k]) { c[k] = cfg[k]; } }
     var pkg = { v: 1, s: Date.now(), c: c, o: store.get('ocultos', []) };
     return location.protocol + '//' + location.host + location.pathname + '#cfg=' + b64e(JSON.stringify(pkg));
   }
@@ -676,7 +762,7 @@
     if (!pkg || pkg.v !== 1 || typeof pkg.c !== 'object') { return 'Formato de definições desconhecido.'; }
     if (!force && pkg.s <= store.get('importStamp', 0)) { return 'antigo'; }
     for (var k in DEF) {
-      if (DEF.hasOwnProperty(k)) { cfg[k] = (pkg.c.hasOwnProperty(k) && typeof pkg.c[k] === typeof DEF[k]) ? pkg.c[k] : DEF[k]; }
+      if (DEF.hasOwnProperty(k) && !NOEXPORT[k]) { cfg[k] = (pkg.c.hasOwnProperty(k) && typeof pkg.c[k] === typeof DEF[k]) ? pkg.c[k] : DEF[k]; }
     }
     saveCfg();
     if (pkg.o && pkg.o.length !== undefined) { store.set('ocultos', pkg.o); }
@@ -697,6 +783,7 @@
     if (m.chave) { cfg.chave = m.chave; changed = true; }
     if (m.ha) { cfg.haUrl = m.ha; if (cfg.luzes === 'nenhuma') { cfg.luzes = 'ha'; } changed = true; }
     if (m.token) { cfg.haToken = m.token; if (cfg.luzes === 'nenhuma') { cfg.luzes = 'ha'; } changed = true; }
+    if (m.orc && /^[A-Za-z0-9_-]{24,100}$/.test(m.orc)) { cfg.orcToken = m.orc; changed = true; }
     if (changed) {
       saveCfg();
       try { history.replaceState(null, '', location.pathname); } catch (e) {}
@@ -888,12 +975,15 @@
   function showView(v) {
     if (!$('v-' + v)) { v = 'casa'; }
     curView = v;
-    each(document.querySelectorAll('.view'), function (el) { el.className = 'view' + (el.id === 'v-' + v ? ' on' : ''); });
+    var vid = (v === 'orc' && orcReady()) ? 'v-orcapp' : 'v-' + v;
+    each(document.querySelectorAll('.view'), function (el) { el.className = 'view' + (el.id === vid ? ' on' : ''); });
     each(document.querySelectorAll('#tabs button[data-v]'), function (b) { b.className = b.getAttribute('data-v') === v ? 'on' : ''; });
     store.set('tab', v);
     if (v === 'casa') { loadLights(false); }
     if (v === 'tv') { refreshTV(); }
     if (v === 'agenda') { calRefresh(false); }
+    if (v === 'orc' && orcReady()) { oaLoad(false); }
+    if (v === 'compras') { todoLoad(false); }
   }
   $('tabs').addEventListener('click', function (ev) {
     var b = closest(ev.target, 'data-v', $('tabs'));
@@ -1094,50 +1184,119 @@
   $('miniev').addEventListener('click', function () { showView('agenda'); });
   $('minibud').addEventListener('click', function () { showView('orc'); });
 
-  // ================= compras =================
+  // ================= compras (local ou Microsoft To Do) =================
+  var T = { itens: store.get('todocache', []), done: {}, at: 0, loading: false, err: '', listas: store.get('todolistas', []) };
+  function todoReady() { return !!(trim(cfg.ponte) && trim(cfg.chave) && cfg.msRefresh && cfg.todoLista); }
+  function todoCall(obj, cb) {
+    obj.refresh = cfg.msRefresh; obj.lista = cfg.todoLista;
+    TUYA.call(obj, function (err, d) {
+      if (!err && d && d.refresh && d.refresh !== cfg.msRefresh) { cfg.msRefresh = d.refresh; saveCfg(); }
+      cb(err, d);
+    });
+  }
+  function todoLoad(force) {
+    if (!todoReady() || T.loading) { return; }
+    if (!force && Date.now() - T.at < 60000) { return; }
+    T.loading = true;
+    todoCall({ acao: 'todo_itens' }, function (err, d) {
+      T.loading = false; T.at = Date.now();
+      if (err) { T.err = /desconhecida/i.test(err) ? 'Atualize a ponte para a versão 3 (ponte-luzes.js).' : String(err); }
+      else {
+        T.err = '';
+        var keep = [];
+        each(T.itens, function (i) { if (i.tmp) { keep.push(i); } });
+        T.itens = keep.concat(d.itens || []); T.done = {};
+        store.set('todocache', d.itens || []);
+      }
+      renderShop();
+    });
+  }
+  function shopItems() {
+    if (todoReady()) {
+      var out = [];
+      each(T.itens, function (i) { out.push({ id: i.id, x: i.titulo, done: !!T.done[i.id], tmp: !!i.tmp }); });
+      return out;
+    }
+    return store.get('shop', []);
+  }
   function shopItem(i, del) {
-    return '<li class="item' + (i.done ? ' done' : '') + '" data-id="' + i.id + '"><span class="chk"></span><span class="txt">' + esc(i.x) + '</span>' +
+    return '<li class="item' + (i.done ? ' done' : '') + (i.tmp ? ' pending' : '') + '" data-id="' + esc(i.id) + '"><span class="chk"></span><span class="txt">' + esc(i.x) + '</span>' +
       (del ? '<button type="button" class="del" data-del="1" aria-label="Apagar">×</button>' : '') + '</li>';
   }
   function renderShop() {
-    var items = store.get('shop', []);
+    var td = todoReady(), items = shopItems();
     var todo = items.filter(function (i) { return !i.done; });
     var done = items.filter(function (i) { return i.done; });
     var h = '';
-    each(todo.concat(done), function (i) { h += shopItem(i, true); });
-    $('shoplist').innerHTML = h || '<li class="empty">A lista está vazia.</li>';
+    each(td ? items : todo.concat(done), function (i) { h += shopItem(i, true); });
+    $('shoplist').innerHTML = h || '<li class="empty">' + (td && T.loading ? 'A carregar a lista…' : 'A lista está vazia.') + '</li>';
     var btn = $('shopclear');
-    if (done.length) { btn.className = 'ghost small'; btn.textContent = 'Limpar comprados (' + done.length + ')'; }
+    if (!td && done.length) { btn.className = 'ghost small'; btn.textContent = 'Limpar comprados (' + done.length + ')'; }
     else { btn.className = 'ghost small hidden'; }
+    $('shopsrc').textContent = td ? 'Microsoft To Do · ' + (cfg.todoNome || 'lista') : '';
+    $('shoprefresh').className = 'ghost small icon' + (td ? '' : ' hidden');
+    var eb = $('shoperr');
+    if (td && T.err) { eb.className = 'errbox'; eb.textContent = T.err; } else { eb.className = 'errbox hidden'; }
     var mini = '';
     each(todo.slice(0, 4), function (i) { mini += shopItem(i, false); });
     if (todo.length > 4) { mini += '<li class="more" data-go="compras">+ ' + (todo.length - 4) + ' na lista</li>'; }
     $('minishop').innerHTML = mini || '<li class="empty">Nada para comprar.</li>';
   }
+  function findItem(id) { for (var i = 0; i < T.itens.length; i++) { if (T.itens[i].id === id) { return i; } } return -1; }
+  function addShop(x) {
+    if (!todoReady()) {
+      var items = store.get('shop', []);
+      items.push({ id: uid(), x: x, done: false });
+      store.set('shop', items); renderShop(); return;
+    }
+    var tmp = { id: 'tmp' + uid(), titulo: x, tmp: true };
+    T.itens.unshift(tmp); renderShop();
+    todoCall({ acao: 'todo_novo', titulo: x }, function (err, d) {
+      var k = findItem(tmp.id);
+      if (err) { if (k > -1) { T.itens.splice(k, 1); } toast('To Do: ' + err, true); }
+      else if (k > -1) { T.itens[k] = { id: d.item.id, titulo: d.item.titulo }; }
+      renderShop();
+    });
+  }
   function toggleShop(id) {
-    var items = store.get('shop', []);
-    each(items, function (i) { if (i.id === id) { i.done = !i.done; } });
-    store.set('shop', items);
+    if (!todoReady()) {
+      var items = store.get('shop', []);
+      each(items, function (i) { if (i.id === id) { i.done = !i.done; } });
+      store.set('shop', items); renderShop(); return;
+    }
+    if (/^tmp/.test(id)) { return; }
+    var feito = !T.done[id];
+    T.done[id] = feito; renderShop();
+    todoCall({ acao: 'todo_estado', id: id, feito: feito }, function (err) {
+      if (err) { T.done[id] = !feito; toast('To Do: ' + err, true); renderShop(); }
+    });
+  }
+  function delShop(id) {
+    if (!todoReady()) {
+      store.set('shop', store.get('shop', []).filter(function (i) { return i.id !== id; }));
+      renderShop(); return;
+    }
+    if (/^tmp/.test(id)) { return; }
+    var k = findItem(id);
+    if (k < 0) { return; }
+    var item = T.itens.splice(k, 1)[0];
     renderShop();
+    todoCall({ acao: 'todo_apagar', id: id }, function (err) {
+      if (err) { T.itens.splice(Math.min(k, T.itens.length), 0, item); toast('To Do: ' + err, true); renderShop(); }
+    });
   }
   $('shopform').addEventListener('submit', function (ev) {
     ev.preventDefault();
     var x = trim($('shopin').value);
     if (!x) { return; }
-    var items = store.get('shop', []);
-    items.push({ id: uid(), x: x, done: false });
-    store.set('shop', items);
     $('shopin').value = '';
-    renderShop();
+    addShop(x);
   });
   $('shoplist').addEventListener('click', function (ev) {
     var li = closest(ev.target, 'data-id', $('shoplist'));
     if (!li) { return; }
     var id = li.getAttribute('data-id');
-    if (closest(ev.target, 'data-del', $('shoplist'))) {
-      store.set('shop', store.get('shop', []).filter(function (i) { return i.id !== id; }));
-      renderShop();
-    } else { toggleShop(id); }
+    if (closest(ev.target, 'data-del', $('shoplist'))) { delShop(id); } else { toggleShop(id); }
   });
   $('minishop').addEventListener('click', function (ev) {
     if (closest(ev.target, 'data-go', $('minishop'))) { showView('compras'); return; }
@@ -1148,6 +1307,7 @@
     store.set('shop', store.get('shop', []).filter(function (i) { return !i.done; }));
     renderShop();
   });
+  $('shoprefresh').addEventListener('click', function () { todoLoad(true); });
 
   // ================= orçamento =================
   function setBar(el, spent, lim) {
@@ -1157,7 +1317,8 @@
       el.className = spent > lim ? 'over' : (pct >= 85 ? 'mid' : '');
     } else { el.style.width = '0'; el.className = ''; }
   }
-  function renderBud() {
+  function renderBud() { if (orcReady()) { renderOrcApp(); } else { renderBudLocal(); } }
+  function renderBudLocal() {
     var lim = store.get('limit', 0);
     var mk = iso(new Date()).slice(0, 7);
     var month = store.get('expenses', []).filter(function (e) { return e.d.slice(0, 7) === mk; });
@@ -1167,6 +1328,7 @@
     $('budspent').textContent = eur(spent);
     $('minispent').textContent = eur(spent);
     var left = $('budleft'), mleft = $('minileft');
+    $('minispent').previousSibling.textContent = 'gasto';
     if (lim > 0) {
       var rest = lim - spent;
       left.textContent = eur(rest); left.className = 'money' + (rest < 0 ? ' neg' : '');
@@ -1214,6 +1376,212 @@
     var id = li.getAttribute('data-id');
     store.set('expenses', store.get('expenses', []).filter(function (e) { return e.id !== id; }));
     renderBud();
+  });
+
+  // ================= orçamento da app Meu Orçamento (Lovable / Supabase) =================
+  // Mesmas regras de src/lib/budget-calc.ts da app (valores em cêntimos).
+  var PRIORITY = ['Casa', 'Supermercado', 'Gasóleo', 'Lazer', 'Cloud OneDrive', 'Creche Gui'];
+  var NAMED_COLORS = { sage: '#78ad8d', other: '#8a8f98' };
+  function orcReady() { return !!cfg.orcToken; }
+  function pctOf(part, whole) { return whole <= 0 ? null : Math.round(part * 1000 / whole) / 10; }
+  function cents(c) { return eur(c / 100); }
+  function oaSummary(txs, budget) {
+    var income = 0, expenses = 0, planned = {}, hasPlan = {}, spent = {}, dev = 0, budgetTotal = null;
+    each(txs, function (t) { if (t.kind === 'income') { income += t.amount_cents; } else { expenses += t.amount_cents; } });
+    if (budget.length) { budgetTotal = 0; each(budget, function (b) { budgetTotal += b.amount_cents; planned[b.category_id] = b.amount_cents; hasPlan[b.category_id] = true; }); }
+    each(txs, function (t) {
+      if (t.kind !== 'expense') { return; }
+      if (t.category_id && hasPlan[t.category_id]) { spent[t.category_id] = (spent[t.category_id] || 0) + t.amount_cents; }
+      else { dev += t.amount_cents; }
+    });
+    for (var id in spent) { if (spent.hasOwnProperty(id)) { dev += Math.max(spent[id] - planned[id], 0); } }
+    var excess = budgetTotal !== null ? budgetTotal - income : 0;
+    var free = budgetTotal !== null ? income - budgetTotal : income;
+    return {
+      income: income, expenses: expenses, available: income - expenses, budgetTotal: budgetTotal,
+      expensePctOfIncome: pctOf(expenses, income), budgetExcess: excess > 0 ? excess : 0,
+      unallocated: free - dev, deviations: dev, absorbed: Math.min(Math.max(free, 0), dev),
+      budgetRemaining: budgetTotal !== null ? budgetTotal - expenses : null, hasData: txs.length > 0 || budget.length > 0
+    };
+  }
+  function oaRows(categories, txs, budget) {
+    var spent = {}, planned = {}, rows = [];
+    each(txs, function (t) { if (t.kind === 'expense' && t.category_id) { spent[t.category_id] = (spent[t.category_id] || 0) + t.amount_cents; } });
+    each(budget, function (b) { planned[b.category_id] = b.amount_cents; });
+    each(categories, function (c) {
+      var p = planned.hasOwnProperty(c.id) ? planned[c.id] : null, sp = spent[c.id] || 0;
+      if (p === null && sp === 0) { return; }
+      rows.push({ category: c, planned: p, spent: sp, remaining: p === null ? null : p - sp,
+        execution: p === null ? null : (p === 0 ? (sp > 0 ? 100 : 0) : Math.round(sp / p * 1000) / 10), exceeded: p !== null && sp > p });
+    });
+    return rows.sort(function (a, b) { return (b.planned !== null ? b.planned : b.spent) - (a.planned !== null ? a.planned : a.spent); });
+  }
+  function oaOverview(rows) {
+    var picked = [], byName = {};
+    each(rows, function (r) { byName[r.category.name.toLowerCase()] = r; });
+    each(PRIORITY, function (n) { var r = byName[n.toLowerCase()]; if (r) { picked.push(r); } });
+    each(rows, function (r) { if (picked.indexOf(r) < 0) { picked.push(r); } });
+    var rank = function (r) { return r.remaining === null ? 3 : (r.remaining > 0 ? 0 : (r.remaining === 0 ? 1 : 2)); };
+    return picked.map(function (r, i) { return { r: r, i: i }; }).sort(function (a, b) { return rank(a.r) - rank(b.r) || a.i - b.i; }).map(function (x) { return x.r; });
+  }
+  function oaCoverage(rows, absorbed) {
+    var out = {}, left = absorbed;
+    rows.filter(function (r) { return r.exceeded; }).sort(function (a, b) { return a.remaining - b.remaining; }).forEach(function (r) {
+      var c = Math.min(-r.remaining, Math.max(left, 0));
+      out[r.category.id] = c; left -= c;
+    });
+    return out;
+  }
+  function catColor(c) { return /^#[0-9a-f]{3,8}$/i.test(c || '') ? c : (NAMED_COLORS[c] || '#c9a12e'); }
+
+  var now1 = new Date();
+  var O = { y: now1.getFullYear(), m: now1.getMonth() + 1, data: {}, loading: {}, err: '', tipo: 'expense' };
+  (function () { var c = store.get('orccache', null); if (c && c.k && c.d) { O.data[c.k] = { t: 0, d: c.d }; } })();
+  function oaKey(y, m) { return y + '-' + m; }
+  function rpc(fn, params, cb) {
+    params.p_token = cfg.orcToken;
+    req('POST', trim(cfg.orcUrl).replace(/\/+$/, '') + '/rest/v1/rpc/' + fn, { 'apikey': cfg.orcKey, 'Content-Type': 'application/json' }, JSON.stringify(params), function (err, d) {
+      if (err && /chave invalida/i.test(err)) { err = 'A chave do orçamento não é válida.'; }
+      else if (err && /^Sem ligação/.test(err)) { err = 'Sem ligação à app do orçamento.'; }
+      cb(err, d);
+    });
+  }
+  function oaLoad(force, y, m) {
+    if (!orcReady()) { return; }
+    y = y || O.y; m = m || O.m;
+    var k = oaKey(y, m), c = O.data[k];
+    if (O.loading[k] || (!force && c && Date.now() - c.t < 5 * 60000)) { renderBud(); return; }
+    O.loading[k] = true; renderBud();
+    rpc('painel_orcamento', { p_ano: y, p_mes: m }, function (err, d) {
+      O.loading[k] = false;
+      if (err) { O.err = String(err); }
+      else {
+        O.err = '';
+        O.data[k] = { t: Date.now(), d: d };
+        var n = new Date();
+        if (y === n.getFullYear() && m === n.getMonth() + 1) { store.set('orccache', { k: k, d: d }); }
+      }
+      renderBud();
+    });
+  }
+  function oaParse(d) {
+    var cats = [], txs = [], budget = [];
+    each(d.categorias || [], function (c) { cats.push({ id: c.id, name: c.nome, color: c.cor }); });
+    each(d.movimentos || [], function (t) { txs.push({ id: t.id, kind: t.tipo, category_id: t.cat, amount_cents: Number(t.v), date: t.data, description: t.desc || '', painel: !!t.painel, created: t.criado }); });
+    each(d.orcamento || [], function (b) { budget.push({ category_id: b.cat, amount_cents: Number(b.v) }); });
+    return { cats: cats, txs: txs, budget: budget, nome: d.nome };
+  }
+  function stat(main, label, value, sub, neg, muted) {
+    return '<div class="stat' + (main ? ' main' : '') + '"><div><span class="lbl">' + label + '</span><div class="v' + (neg ? ' neg' : '') + (muted ? ' mut' : '') + '">' + value + '</div><small>' + sub + '</small></div></div>';
+  }
+  function fillOaCats(cats) {
+    var sel = $('oacat'), cur = sel.value, pri = [], rest = [], h = '';
+    each(cats, function (c) { if (PRIORITY.indexOf(c.name) > -1) { pri.push(c); } else { rest.push(c); } });
+    pri.sort(function (a, b) { return PRIORITY.indexOf(a.name) - PRIORITY.indexOf(b.name); });
+    if (O.tipo === 'income') { h += '<option value="">Sem categoria</option>'; } else { h += '<option value="">Categoria…</option>'; }
+    each(pri.concat(rest), function (c) { h += '<option value="' + esc(c.id) + '">' + esc(c.name) + '</option>'; });
+    sel.innerHTML = h;
+    if (cur) { sel.value = cur; }
+  }
+  function renderOrcApp() {
+    var k = oaKey(O.y, O.m), c = O.data[k];
+    $('oatitle').textContent = 'Orçamento · ' + MESES[O.m - 1] + (O.y !== new Date().getFullYear() ? ' ' + O.y : '');
+    var eb = $('oaerr');
+    if (O.err) { eb.className = 'errbox'; eb.textContent = O.err; } else { eb.className = 'errbox hidden'; }
+    $('oastatus').textContent = O.loading[k] ? 'a atualizar…' : (c && c.t ? 'da app · ' + ago(c.t) : '');
+    // resumo na Casa: sempre o mês atual
+    var n = new Date(), ck = oaKey(n.getFullYear(), n.getMonth() + 1), cc = O.data[ck];
+    if (cc) {
+      var p = oaParse(cc.d), sm = oaSummary(p.txs, p.budget);
+      var ml = $('minileft');
+      if (sm.budgetRemaining !== null) { ml.textContent = cents(sm.budgetRemaining) + ' restantes'; ml.className = 'money s' + (sm.budgetRemaining < 0 ? ' neg' : ''); }
+      else { ml.textContent = cents(sm.available) + ' disponíveis'; ml.className = 'money s' + (sm.available < 0 ? ' neg' : ''); }
+      $('minispent').previousSibling.textContent = 'despesas';
+      $('minispent').textContent = cents(sm.expenses);
+      setBar($('minibar'), sm.expenses, sm.budgetTotal !== null ? sm.budgetTotal : sm.income);
+    }
+    if (!c) {
+      $('oastats').innerHTML = '<div class="empty">' + (O.loading[k] ? 'A carregar os números da app…' : 'Sem dados.') + '</div>';
+      $('oacats').innerHTML = ''; $('oamovs').innerHTML = ''; $('oaexcess').className = 'warnbox hidden';
+      return;
+    }
+    var d = oaParse(c.d), s = oaSummary(d.txs, d.budget), rows = oaRows(d.cats, d.txs, d.budget);
+    var shown = oaOverview(rows), cov = oaCoverage(rows, s.absorbed);
+    $('oastats').innerHTML =
+      stat(true, 'Disponível', cents(s.available), 'Rendimentos menos despesas', s.available < 0) +
+      stat(false, 'Não alocado', cents(s.unallocated), s.absorbed > 0 ? cents(s.absorbed) + ' absorvidos por desvios' : (s.unallocated < 0 ? 'Orçamento e desvios acima do que recebem' : 'Rendimentos sem categoria, livres para gastar'), s.unallocated < 0) +
+      stat(false, 'Despesas registadas', cents(s.expenses), s.expensePctOfIncome !== null ? String(s.expensePctOfIncome).replace('.', ',') + '% dos rendimentos' : '— dos rendimentos') +
+      stat(false, 'Restante no orçamento', s.budgetRemaining === null ? 'Sem orçamento' : cents(s.budgetRemaining), s.budgetTotal === null ? 'Defina o orçamento do mês na app' : 'De ' + cents(s.budgetTotal) + ' previstos', s.budgetRemaining !== null && s.budgetRemaining < 0, s.budgetRemaining === null);
+    var ex = $('oaexcess');
+    if (s.budgetExcess > 0) { ex.className = 'warnbox'; ex.textContent = 'O orçamento previsto excede os rendimentos em ' + cents(s.budgetExcess) + '.'; } else { ex.className = 'warnbox hidden'; }
+    var h = '';
+    each(shown, function (r) {
+      var pc = r.execution === null ? 0 : Math.min(r.execution, 100), cv = cov[r.category.id] || 0, badge = '';
+      if (r.exceeded && cv >= -r.remaining) { badge = '<span class="badge ok">Coberto pelo saldo livre</span>'; }
+      else if (r.exceeded) { badge = '<span class="badge">' + (cv > 0 ? 'Excedido · ' + cents(cv) + ' coberto' : 'Excedido') + '</span>'; }
+      h += '<li class="crow"><div class="ctop"><span class="cdot" style="background:' + catColor(r.category.color) + '"></span><span class="cname">' + esc(r.category.name) + '</span>' + badge +
+        '<span class="crest' + (r.remaining !== null && r.remaining < 0 ? ' neg' : '') + '">' + (r.remaining === null ? '' : cents(r.remaining)) + '</span></div>' +
+        (r.execution !== null ? '<div class="bar thin"><div style="width:' + pc + '%;background:' + (r.exceeded ? '#e5394f' : catColor(r.category.color)) + '"></div></div>' : '') +
+        '<div class="csub">' + (r.planned === null ? cents(r.spent) + ' registados · sem orçamento' : cents(r.spent) + ' de ' + cents(r.planned) + (r.remaining !== null && r.remaining >= 0 ? ' · restam' : ' · excedido')) + '</div></li>';
+    });
+    $('oacats').innerHTML = h || '<li class="empty">Ainda não há dados neste mês.</li>';
+    var names = {};
+    each(d.cats, function (cat) { names[cat.id] = cat.name; });
+    var movs = d.txs.slice().sort(function (a, b) { return (b.created || '') < (a.created || '') ? -1 : 1; }).slice(0, 15), mh = '';
+    var dayAgo = Date.now() - 23.5 * 3600000;
+    each(movs, function (t) {
+      var dd = (t.date || '').split('-'), inc = t.kind === 'income';
+      var canUndo = t.painel && t.created && Date.parse(t.created) > dayAgo;
+      mh += '<li class="item"' + (canUndo ? ' data-id="' + esc(t.id) + '"' : '') + '><span class="txt">' + esc(t.description || names[t.category_id] || (inc ? 'Rendimento' : 'Despesa')) +
+        '<small>' + esc(names[t.category_id] || (inc ? 'Rendimento' : '')) + (dd.length === 3 ? ' · ' + dd[2] + '/' + dd[1] : '') + (t.painel ? ' · lançado no painel' : '') + '</small></span>' +
+        '<span class="amt' + (inc ? ' inc' : '') + '">' + (inc ? '+' : '') + cents(t.amount_cents) + '</span>' +
+        (canUndo ? '<button type="button" class="del" data-del="1" aria-label="Anular">×</button>' : '') + '</li>';
+    });
+    $('oamovs').innerHTML = mh || '<li class="empty">Sem movimentos neste mês.</li>';
+    fillOaCats(d.cats);
+  }
+  function oaMove(n) {
+    O.m += n;
+    if (O.m < 1) { O.m = 12; O.y--; }
+    if (O.m > 12) { O.m = 1; O.y++; }
+    renderBud(); oaLoad(false);
+  }
+  $('oaprev').addEventListener('click', function () { oaMove(-1); });
+  $('oanext').addEventListener('click', function () { oaMove(1); });
+  $('oahoje').addEventListener('click', function () { var n = new Date(); O.y = n.getFullYear(); O.m = n.getMonth() + 1; renderBud(); oaLoad(false); });
+  $('oatipo').addEventListener('click', function (ev) {
+    var b = closest(ev.target, 'data-t', $('oatipo'));
+    if (!b) { return; }
+    O.tipo = b.getAttribute('data-t');
+    each(document.querySelectorAll('#oatipo button'), function (x) { x.className = x.getAttribute('data-t') === O.tipo ? 'on' : ''; });
+    var c = O.data[oaKey(O.y, O.m)];
+    if (c) { fillOaCats(oaParse(c.d).cats); }
+  });
+  $('oaform').addEventListener('submit', function (ev) {
+    ev.preventDefault();
+    var v = parseNum($('oavalor').value), cat = $('oacat').value;
+    if (v === null || v <= 0) { toast('Indique um valor', true); return; }
+    if (O.tipo === 'expense' && !cat) { toast('Escolha a categoria da despesa', true); return; }
+    var btn = $('oasubmit');
+    btn.disabled = true;
+    rpc('painel_lancar', { p_tipo: O.tipo, p_valor_cents: Math.round(v * 100), p_categoria: cat || null, p_descricao: trim($('oadesc').value), p_data: null }, function (err) {
+      btn.disabled = false;
+      if (err) { toast('Não lancei: ' + err, true); return; }
+      $('oavalor').value = ''; $('oadesc').value = '';
+      toast((O.tipo === 'income' ? 'Rendimento' : 'Despesa') + ' lançado na app');
+      var n = new Date(); O.y = n.getFullYear(); O.m = n.getMonth() + 1;
+      oaLoad(true);
+    });
+  });
+  $('oamovs').addEventListener('click', function (ev) {
+    if (!closest(ev.target, 'data-del', $('oamovs'))) { return; }
+    var li = closest(ev.target, 'data-id', $('oamovs'));
+    if (!li) { return; }
+    rpc('painel_anular', { p_id: li.getAttribute('data-id') }, function (err, d) {
+      if (err) { toast('Não anulei: ' + err, true); return; }
+      toast(d && d.apagados ? 'Movimento anulado' : 'Já não é possível anular este movimento', !(d && d.apagados));
+      oaLoad(true);
+    });
   });
 
   // ================= luzes: fornecedores =================
@@ -1712,11 +2080,13 @@
     $('c-haurl').value = cfg.haUrl || (SERVED_BY_HA ? location.protocol + '//' + location.host : '');
     $('c-hatoken').value = cfg.haToken;
     $('c-cal').value = cfg.cal;
+    $('c-orc').value = cfg.orcToken;
+    fillTodoLists(); showTodoState(); $('todocode').className = 'hidden';
     $('c-natal').value = cfg.natalPct;
     $('c-cozy').value = cfg.cozyNomes; $('c-cozypct').value = cfg.cozyPct; $('c-cozyk').value = cfg.cozyK; $('c-cozyoff').checked = !!cfg.cozyApaga;
     $('c-neve').checked = !!cfg.neve; $('c-grinalda').checked = !!cfg.grinalda;
     $('c-local').textContent = 'Localidade atual: ' + cfg.local;
-    each(['m-ponte', 'm-ha', 'm-cal', 'm-import'], function (id) { $(id).textContent = ''; });
+    each(['m-ponte', 'm-ha', 'm-cal', 'm-import', 'm-orc', 'm-todo'], function (id) { $(id).textContent = ''; });
     $('geores').innerHTML = ''; $('qrbox').className = 'hidden'; $('c-import').value = '';
     showCozyMatch();
     setModeUI(cfg.luzes);
@@ -1745,7 +2115,8 @@
       TUYA.call({ acao: 'ping' }, function (err, d) {
         var old = err && /desconhecida/i.test(err);
         if (err && !old) { restore(); msg('m-ponte', err, false); return; }
-        var head = old ? 'Ponte antiga (versão 1): as luzes funcionam, mas para o Google Calendar cole o novo ponte-luzes.js no Cloudflare.' : 'Ponte ativa (versão ' + (d.versao || 2) + ').';
+        var head = old ? 'Ponte antiga (versão 1): as luzes funcionam, mas para o Google Calendar e o To Do cole o novo ponte-luzes.js no Cloudflare.' :
+          'Ponte ativa (versão ' + (d.versao || 2) + ').' + ((d.versao || 2) < 3 ? ' Para o Microsoft To Do, cole o novo ponte-luzes.js (versão 3).' : (d.todo ? '' : ' Para o To Do falta a variável MS_CLIENT_ID.'));
         if (!old && !d.tuya) { restore(); msg('m-ponte', head + ' Ainda sem as chaves da Tuya (luzes).', true); return; }
         TUYA.list(function (e2, devs) {
           restore();
@@ -1768,6 +2139,83 @@
         msg('m-cal', 'Ligação feita: ' + (d.eventos || []).length + ' eventos nos próximos 60 dias. Carregue em Guardar.', true);
       });
     });
+  });
+  // ---- orçamento da app ----
+  $('t-orc').addEventListener('click', function () {
+    msg('m-orc', 'A testar…', true);
+    withDraft([['orcToken', 'c-orc']], function (restore) {
+      if (!cfg.orcToken) { restore(); msg('m-orc', 'Cole a chave do orçamento.', false); return; }
+      var n = new Date();
+      rpc('painel_orcamento', { p_ano: n.getFullYear(), p_mes: n.getMonth() + 1 }, function (err, d) {
+        restore();
+        if (err) { msg('m-orc', err, false); return; }
+        msg('m-orc', 'Ligação feita: ' + (d.categorias || []).length + ' categorias e ' + (d.movimentos || []).length + ' movimentos em ' + MESES[n.getMonth()] + '. Carregue em Guardar.', true);
+      });
+    });
+  });
+  // ---- Microsoft To Do ----
+  var TL = { device: null, timer: null, until: 0, every: 5000 };
+  function showTodoState() {
+    var on = !!cfg.msRefresh;
+    $('todostate').textContent = on ? 'Ligado' + (cfg.todoNome ? ' · lista: ' + cfg.todoNome : ' · escolha a lista') : 'Não ligado. Primeiro registe o painel no Azure (passos abaixo).';
+    $('t-todo').textContent = on ? 'Ligar outra vez' : 'Ligar ao Microsoft To Do';
+    $('t-todooff').className = 'ghost' + (on ? '' : ' hidden');
+  }
+  function fillTodoLists() {
+    var sel = $('c-todolista'), h = '<option value="">' + (T.listas.length ? 'Escolher a lista' : 'Ligue primeiro ao To Do') + '</option>';
+    each(T.listas, function (l) { h += '<option value="' + esc(l.id) + '"' + (l.id === cfg.todoLista ? ' selected' : '') + '>' + esc(l.nome) + '</option>'; });
+    sel.innerHTML = h;
+  }
+  function setLists(listas) {
+    T.listas = listas || []; store.set('todolistas', T.listas);
+    if (!cfg.todoLista || !T.listas.some(function (l) { return l.id === cfg.todoLista; })) {
+      var pick = null;
+      each(T.listas, function (l) { if (!pick && /compra|shopping|mercearia|supermercado|grocer/i.test(l.nome)) { pick = l; } });
+      if (pick) { cfg.todoLista = pick.id; cfg.todoNome = pick.nome; saveCfg(); }
+    }
+    fillTodoLists(); showTodoState();
+  }
+  function todoPoll() {
+    clearTimeout(TL.timer);
+    if (!TL.device) { return; }
+    if (Date.now() > TL.until) { TL.device = null; $('todocode').className = 'hidden'; msg('m-todo', 'O código expirou. Carregue outra vez em Ligar.', false); return; }
+    withDraft([['ponte', 'c-ponte'], ['chave', 'c-chave']], function (restore) {
+      TUYA.call({ acao: 'todo_espera', device: TL.device }, function (err, d) {
+        restore();
+        if (err) { TL.device = null; $('todocode').className = 'hidden'; msg('m-todo', err, false); return; }
+        if (d.pendente) { TL.timer = setTimeout(todoPoll, TL.every); return; }
+        TL.device = null; $('todocode').className = 'hidden';
+        cfg.msRefresh = d.refresh; saveCfg();
+        setLists(d.listas);
+        msg('m-todo', 'Ligado ao Microsoft To Do.' + (cfg.todoLista ? ' Lista escolhida: ' + cfg.todoNome + '.' : ' Escolha a lista.') + ' Carregue em Guardar.', true);
+        T.at = 0;
+      });
+    });
+  }
+  $('t-todo').addEventListener('click', function () {
+    if (!trim($('c-ponte').value) || !trim($('c-chave').value)) { msg('m-todo', 'Primeiro ponha o endereço e a chave da ponte.', false); return; }
+    msg('m-todo', 'A pedir o código…', true);
+    withDraft([['ponte', 'c-ponte'], ['chave', 'c-chave']], function (restore) {
+      TUYA.call({ acao: 'todo_inicio' }, function (err, d) {
+        restore();
+        if (err) { msg('m-todo', /desconhecida/i.test(err) ? 'A ponte é antiga: cole o novo ponte-luzes.js (versão 3) no Cloudflare.' : err, false); return; }
+        $('todocodev').textContent = d.codigo;
+        $('todocode').className = '';
+        msg('m-todo', 'À espera que entre na conta Microsoft…', true);
+        TL.device = d.device; TL.until = Date.now() + (d.expira || 900) * 1000; TL.every = Math.max(3, d.intervalo || 5) * 1000;
+        TL.timer = setTimeout(todoPoll, TL.every);
+      });
+    });
+  });
+  $('t-todooff').addEventListener('click', function () {
+    cfg.msRefresh = ''; cfg.todoLista = ''; cfg.todoNome = ''; saveCfg();
+    T.itens = []; T.listas = []; store.del('todocache'); store.del('todolistas');
+    fillTodoLists(); showTodoState(); renderShop();
+    msg('m-todo', 'Desligado. A lista de compras volta a ser só deste aparelho.', true);
+  });
+  $('c-todolista').addEventListener('change', function () {
+    var sel = $('c-todolista');
+    if (sel.value) { cfg.todoLista = sel.value; cfg.todoNome = sel.options[sel.selectedIndex].text; saveCfg(); T.at = 0; showTodoState(); }
   });
   function showCozyMatch() {
     var el = $('m-cozy');
@@ -1860,6 +2308,8 @@
     cfg.haUrl = trim($('c-haurl').value); cfg.haToken = trim($('c-hatoken').value);
     cfg.tv = $('c-tv').value;
     cfg.cal = trim($('c-cal').value);
+    cfg.orcToken = trim($('c-orc').value);
+    if ($('c-todolista').value) { cfg.todoLista = $('c-todolista').value; cfg.todoNome = $('c-todolista').options[$('c-todolista').selectedIndex].text; }
     cfg.natalPct = clampPct($('c-natal').value, 20);
     cfg.cozyNomes = trim($('c-cozy').value);
     cfg.cozyPct = clampPct($('c-cozypct').value, 20);
@@ -1874,6 +2324,8 @@
     applyDecor();
     closeCfg();
     G.cache = {}; G.err = ''; calRefresh(true); renderCal(); renderEvents();
+    O.data = {}; O.err = ''; T.at = 0; T.err = '';
+    showView(curView); renderShop(); renderBud(); oaLoad(true); todoLoad(true);
     L.prov = undefined;
     loadLights(true);
     renderTV();
@@ -1887,7 +2339,7 @@
       return;
     }
     clearTimeout(wipeTimer); wipeTimer = null;
-    each(['events', 'shop', 'expenses', 'limit', 'gcal', 'wxcache', 'cfg', 'devcache', 'ocultos', 'tab', 'importStamp'], function (k) { store.del(k); });
+    each(['events', 'shop', 'expenses', 'limit', 'gcal', 'wxcache', 'cfg', 'devcache', 'ocultos', 'tab', 'importStamp', 'orccache', 'todocache', 'todolistas'], function (k) { store.del(k); });
     location.reload();
   });
 
@@ -1924,9 +2376,18 @@
   loadWx();
   calRefresh(false);
   setInterval(function () { if (!document.hidden) { calRefresh(false); } }, 5 * 60000);
+  oaLoad(false); todoLoad(false);
+  // Orçamento de 5 em 5 minutos e lista de compras de 2 em 2, só de dia e com o ecrã visível.
+  setInterval(function () {
+    var h = new Date().getHours();
+    if (document.hidden || h < 7 || h >= 23) { return; }
+    if (todoReady() && Date.now() - T.at >= 2 * 60000 - 1000) { todoLoad(true); }
+    var n = new Date(), k = oaKey(n.getFullYear(), n.getMonth() + 1);
+    if (orcReady() && (!O.data[k] || Date.now() - O.data[k].t >= 5 * 60000 - 1000)) { oaLoad(true, n.getFullYear(), n.getMonth() + 1); }
+  }, 60000);
   if (IMPORTED) { toast('Definições importadas'); }
 
-  window.painelDebug = { L: L, cfg: function () { return cfg; }, xmasText: xmasText };
+  window.painelDebug = { L: L, T: T, O: O, cfg: function () { return cfg; }, xmasText: xmasText, oaSummary: oaSummary, oaRows: oaRows, oaOverview: oaOverview, oaCoverage: oaCoverage };
 })();
 </script>
 </body>

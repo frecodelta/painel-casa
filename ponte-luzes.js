@@ -1,7 +1,8 @@
 /*
- * Ponte do Painel da Casa — Cloudflare Worker  (versão 2)
+ * Ponte do Painel da Casa — Cloudflare Worker  (versão 3)
  * - Luzes e tomadas da Smart Life (Tuya Cloud). A chave secreta da Tuya fica aqui, não no iPad.
  * - Google Calendar: lê o endereço iCal (privado ou público) e devolve os eventos já com as repetições.
+ * - Microsoft To Do: lista de compras nos dois sentidos (login por código; o painel guarda a autorização).
  *
  * Variáveis a criar no Worker (Settings → Variables and Secrets):
  *   PAINEL_CHAVE        Uma palavra-passe à sua escolha, a mesma que põe no painel (tipo Secret)
@@ -9,6 +10,8 @@
  *   TUYA_ACCESS_SECRET  Access Secret / Client Secret do projeto  (tipo Secret)
  *   TUYA_REGIAO         Opcional: eu (predefinido), weu, us, cn, in
  *   CALENDARIO_ICAL     Opcional: endereço(s) iCal, separados por espaço (em alternativa ao campo do painel)
+ *   MS_CLIENT_ID        Para a lista do Microsoft To Do: Application (client) ID da app registada no Azure
+ *   MS_TENANT           Opcional: common (predefinido), consumers (só contas pessoais) ou o ID da organização
  */
 
 const HOSTS = {
@@ -607,6 +610,114 @@ async function calendar(env, req) {
 }
 function eventosPush(arr, list) { for (const e of list) arr.push(e); }
 
+
+// ---------- Microsoft To Do (Microsoft Graph) ----------
+const MS_SCOPE = 'Tasks.ReadWrite offline_access';
+const msCache = new Map(); // refresh token -> { access, exp, refresh }
+
+function msTenant(env) { return env.MS_TENANT || 'common'; }
+export function msErr(d) {
+  const t = String((d && (d.error_description || d.error)) || '');
+  if (/AADSTS7000218/.test(t)) return 'Na app do Azure, em Authentication, ative "Allow public client flows".';
+  if (/AADSTS700016|AADSTS90002|unauthorized_client/.test(t)) return 'O MS_CLIENT_ID está errado ou a app do Azure não aceita este tipo de conta.';
+  if (/AADSTS50194|AADSTS50020|AADSTS9002331/.test(t)) return 'O tipo de conta da app do Azure não aceita esta conta. Escolha "contas de qualquer organização e contas Microsoft pessoais" ou mude MS_TENANT.';
+  if (/AADSTS65001|AADSTS90094/.test(t)) return 'Esta conta precisa de autorização de um administrador da organização.';
+  if (/expired_token|AADSTS70020/.test(t)) return 'O código expirou. Carregue outra vez em "Ligar ao Microsoft To Do".';
+  if (/access_denied|AADSTS70000/.test(t)) return 'O acesso foi recusado na página da Microsoft.';
+  if (/invalid_grant|AADSTS70008|AADSTS700082|AADSTS50173|AADSTS50076/.test(t)) return 'A ligação ao To Do expirou. Volte a ligar nas definições do painel.';
+  return 'Microsoft: ' + (t.split(/\r?\n/)[0].slice(0, 200) || 'erro desconhecido');
+}
+function msError(msg, code) { const e = new Error(msg); e.code = code; return e; }
+
+async function msPost(env, path, params) {
+  const res = await fetch('https://login.microsoftonline.com/' + encodeURIComponent(msTenant(env)) + '/oauth2/v2.0/' + path, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+    body: new URLSearchParams(params).toString()
+  });
+  return res.json().catch(() => ({ error: 'resposta inválida (' + res.status + ')' }));
+}
+async function msAccess(env, refresh) {
+  if (!refresh) throw msError('O painel ainda não está ligado ao Microsoft To Do.', 'ms_auth');
+  const c = msCache.get(refresh);
+  if (c && c.exp > Date.now() + 60000) return c;
+  const d = await msPost(env, 'token', { client_id: env.MS_CLIENT_ID, grant_type: 'refresh_token', refresh_token: refresh, scope: MS_SCOPE });
+  if (!d.access_token) throw msError(msErr(d), 'ms_auth');
+  const r = { access: d.access_token, exp: Date.now() + (Number(d.expires_in) || 3600) * 1000, refresh: d.refresh_token || refresh };
+  msCache.set(refresh, r);
+  msCache.set(r.refresh, r);
+  return r;
+}
+async function graph(tok, method, path, body) {
+  const headers = { Authorization: 'Bearer ' + tok.access };
+  if (body) headers['Content-Type'] = 'application/json';
+  const res = await fetch('https://graph.microsoft.com/v1.0' + path, { method, headers, body: body ? JSON.stringify(body) : undefined });
+  if (res.status === 204) return null;
+  const d = await res.json().catch(() => ({}));
+  if (!res.ok) {
+    const m = d.error ? (d.error.code + ': ' + d.error.message) : 'erro ' + res.status;
+    if (/MailboxNotEnabledForRESTAPI|ServiceNotAvailable/i.test(m)) {
+      throw msError('Esta conta Microsoft não dá acesso ao To Do pela API (limitação da Microsoft em algumas contas pessoais).', 'graph_conta');
+    }
+    throw msError('To Do: ' + m.slice(0, 200), 'graph' + res.status);
+  }
+  return d;
+}
+const listasDe = (d) => ((d && d.value) || []).map((l) => ({ id: l.id, nome: l.displayName, tipo: l.wellknownListName || '' }));
+
+async function todo(env, req) {
+  if (!env.MS_CLIENT_ID) throw msError('A ponte ainda não tem a variável MS_CLIENT_ID (app registada no Azure).', 'ms_cfg');
+  if (req.acao === 'todo_inicio') {
+    const d = await msPost(env, 'devicecode', { client_id: env.MS_CLIENT_ID, scope: MS_SCOPE });
+    if (!d.device_code) throw msError(msErr(d), 'ms_auth');
+    return { codigo: d.user_code, endereco: d.verification_uri || 'https://microsoft.com/devicelogin', device: d.device_code, intervalo: Number(d.interval) || 5, expira: Number(d.expires_in) || 900 };
+  }
+  if (req.acao === 'todo_espera') {
+    const d = await msPost(env, 'token', { client_id: env.MS_CLIENT_ID, grant_type: 'urn:ietf:params:oauth:grant-type:device_code', device_code: String(req.device || '') });
+    if (d.error === 'authorization_pending' || d.error === 'slow_down') return { pendente: true };
+    if (!d.refresh_token) throw msError(msErr(d), 'ms_auth');
+    const r = { access: d.access_token, exp: Date.now() + (Number(d.expires_in) || 3600) * 1000, refresh: d.refresh_token };
+    msCache.set(r.refresh, r);
+    return { refresh: r.refresh, listas: listasDe(await graph(r, 'GET', '/me/todo/lists')) };
+  }
+  const tok = await msAccess(env, String(req.refresh || ''));
+  const out = { refresh: tok.refresh };
+  const lista = '/me/todo/lists/' + encodeURIComponent(String(req.lista || '')) + '/tasks';
+  const tarefa = lista + '/' + encodeURIComponent(String(req.id || ''));
+  switch (req.acao) {
+    case 'todo_listas':
+      out.listas = listasDe(await graph(tok, 'GET', '/me/todo/lists'));
+      return out;
+    case 'todo_itens': {
+      let d;
+      try {
+        d = await graph(tok, 'GET', lista + "?$filter=status%20ne%20'completed'&$top=100");
+      } catch (e) {
+        if (e.code !== 'graph400') throw e;
+        d = await graph(tok, 'GET', lista + '?$top=100');
+      }
+      out.itens = ((d && d.value) || []).filter((t) => t.status !== 'completed')
+        .map((t) => ({ id: t.id, titulo: t.title || '', criado: t.createdDateTime || '' }));
+      return out;
+    }
+    case 'todo_novo': {
+      const titulo = String(req.titulo || '').trim().slice(0, 255);
+      if (!titulo) throw msError('O item está vazio.', 'todo_vazio');
+      const t = await graph(tok, 'POST', lista, { title: titulo });
+      out.item = { id: t.id, titulo: t.title };
+      return out;
+    }
+    case 'todo_estado':
+      await graph(tok, 'PATCH', tarefa, { status: req.feito ? 'completed' : 'notStarted' });
+      return out;
+    case 'todo_apagar':
+      await graph(tok, 'DELETE', tarefa);
+      return out;
+    default:
+      throw msError('Ação desconhecida.', 'acao');
+  }
+}
+
 // ---------- pedidos ----------
 export default {
   async fetch(request, env) {
@@ -619,9 +730,10 @@ export default {
       const html = '<!DOCTYPE html><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">' +
         '<title>Ponte do painel</title><body style="font-family:-apple-system,sans-serif;background:#2a0610;color:#fff8ec;padding:32px">' +
         '<h1 style="color:#f3d77c">🎄 Ponte do painel</h1><p>' +
-        (hasKey ? 'A ponte está ativa (versão 2). Ponha este endereço e a sua chave nas definições do painel.' :
+        (hasKey ? 'A ponte está ativa (versão 3). Ponha este endereço e a sua chave nas definições do painel.' :
           'Falta configurar a variável PAINEL_CHAVE (Settings → Variables and Secrets).') +
-        '</p><p>Luzes Smart Life: ' + (hasTuya ? 'configuradas' : 'falta TUYA_ACCESS_ID e TUYA_ACCESS_SECRET') + '</p></body>';
+        '</p><p>Luzes Smart Life: ' + (hasTuya ? 'configuradas' : 'falta TUYA_ACCESS_ID e TUYA_ACCESS_SECRET') + '</p>' +
+        '<p>Microsoft To Do: ' + (env.MS_CLIENT_ID ? 'configurado' : 'falta MS_CLIENT_ID') + '</p></body>';
       return new Response(html, { headers: { 'Content-Type': 'text/html; charset=utf-8', ...CORS } });
     }
 
@@ -641,7 +753,7 @@ export default {
     try {
       switch (req.acao) {
         case 'ping': {
-          return json({ ok: true, versao: 2, tuya: hasTuya, calendario: !!env.CALENDARIO_ICAL });
+          return json({ ok: true, versao: 3, tuya: hasTuya, calendario: !!env.CALENDARIO_ICAL, todo: !!env.MS_CLIENT_ID });
         }
         case 'calendario': {
           const r = await calendar(env, req);
@@ -672,6 +784,7 @@ export default {
           return json({ ok: true });
         }
         default:
+          if (/^todo_/.test(String(req.acao))) return json(Object.assign({ ok: true }, await todo(env, req)));
           return json({ ok: false, erro: 'Ação desconhecida.' }, 400);
       }
     } catch (e) {

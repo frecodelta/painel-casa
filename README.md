@@ -1,6 +1,6 @@
 # Painel da Casa 🎄
 
-Painel para o iPad, com tema de Natal: relógio, contagem para o Natal, meteorologia, agenda (com o Google Calendar), lista de compras, orçamento do mês, luzes da Smart Life (Modo Natal e Cozy) e comando da Vodafone TV.
+Painel para o iPad, com tema de Natal: relógio, contagem para o Natal, meteorologia, agenda (com o Google Calendar), lista de compras (com o Microsoft To Do), orçamento do mês (com a app Meu Orçamento), luzes da Smart Life (Modo Natal e Cozy) e comando da Vodafone TV.
 
 **Abrir:** https://frecodelta.github.io/painel-casa/
 
@@ -22,6 +22,14 @@ Atalho para configurar o iPad de uma vez:
 ## Google Calendar
 
 A ponte lê o "endereço secreto no formato iCal" do Google Calendar e o painel mostra os eventos com o mesmo aspeto do resto (a verde). Passos em ⚙ → Google Calendar.
+
+## Orçamento (app Meu Orçamento)
+
+Com a chave do orçamento (⚙ → Orçamento), o separador Orçamento lê a base de dados da app através de três funções próprias (`painel_orcamento`, `painel_lancar`, `painel_anular`) e mostra os números com as mesmas regras de cálculo. O que se lança no painel entra na app.
+
+## Lista de compras (Microsoft To Do)
+
+A ponte (versão 3) liga-se ao Microsoft Graph. É preciso registar uma app no Azure e pôr o `MS_CLIENT_ID` no Worker; passos em ⚙ → Lista de compras.
 
 ## Vodafone TV
 
